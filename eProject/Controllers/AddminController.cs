@@ -7,5 +7,7 @@ namespace eProject.Controllers
     [ApiController]
     public class AddminController : ControllerBase
     {
+        private readonly DatabaseContext _dbContext;
+        
     }
 }
