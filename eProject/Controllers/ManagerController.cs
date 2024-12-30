@@ -63,7 +63,6 @@ namespace eProject.Controllers
             return Ok(awards);
         }
 
-        [HttpGet("GetAwardDetail/{id}")]
         //Method Get Detail of the prizes that have been awarded By Id
         [HttpGet("GetAwardDetail/{id}")]
 
@@ -77,7 +76,6 @@ namespace eProject.Controllers
             return Ok(award);
         }
 
-        [HttpGet("GetAllSubmissions")]
         //Method Get All Submissions
         [HttpGet("GetAllSubmissions")]
 
@@ -91,7 +89,6 @@ namespace eProject.Controllers
             return Ok(submissions);
         }
 
-        [HttpGet("GetAllExhibitionArtwork")]
         //Method Get all artwork that have been send to exhibition
         [HttpGet("GetAllExhibitionArtwork")]
 
