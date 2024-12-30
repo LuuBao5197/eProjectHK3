@@ -15,11 +15,17 @@ public class User
     public bool Status { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime Expired { get; set; }
-
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpired { get; set; }
     public Student Student { get; set; }
     public Staff Staff { get; set; }
 }
 
+public class UserAuth
+{
+    public string Email { get; set; }
+    public string Password { get; set; }
+}
 public class Student
 {
     public int Id { get; set; }
