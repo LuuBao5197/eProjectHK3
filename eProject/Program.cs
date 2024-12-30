@@ -92,13 +92,13 @@ namespace eProject
            .AllowAnyMethod()
            .AllowAnyHeader());
             app.UseAuthorization();
-            /*app.UseStaticFiles(new StaticFileOptions
+            app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider
                 (Path.Combine(Directory.GetCurrentDirectory(), "Uploads")),
                 RequestPath = "/Uploads"
 
-            });*/
+            });
 
             app.MapControllers();
 
