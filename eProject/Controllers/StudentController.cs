@@ -15,14 +15,6 @@ namespace eProject.Controllers
             _dbContext = dbContext;
         }
 
-        //method get all students
-        [HttpGet("GetAllStudent")]
-        public async Task<IActionResult> GetAllStudent()
-        {
-            var students = await _dbContext.Students.ToListAsync();
-            return Ok(students);
-        }
-
         //method get one students
         [HttpGet("GetDetailStudent/{id}")]
         public async Task<IActionResult> GetDetailStudent(int id)
@@ -31,42 +23,51 @@ namespace eProject.Controllers
             return Ok(student);
         }
 
-
-        //method create student
-        [HttpPost("CreateOneStudent")]
-        public async Task<Student> CreateOneStudent(Student student) {
-            await _dbContext.Students.AddAsync(student);
-            await _dbContext.SaveChangesAsync();
-            return student;
-        }
-
-        //method create many students
-        [HttpPost("CreateManyStudents")]
-        public async Task<IActionResult> CreateManyStudents(IEnumerable<Student> students)
+        //method get all contest
+        [HttpGet("GetAllContest")]
+        public async Task<IActionResult> GetContest()
         {
-            if (students == null || !students.Any())
-            {
-                return BadRequest("Danh sách sinh viên không được để trống.");
-            }
-
-            await _dbContext.Students.AddRangeAsync(students);
-            await _dbContext.SaveChangesAsync();
-
-            return Ok(students);
+            var contests = await _dbContext.Contests.ToListAsync();
+            return Ok(contests);
         }
 
-
-
-        //method delete student
-        [HttpDelete("DeleteStudent/{id}")]
-        public async Task<Student> DeleteEmployee(int id)
+        //method post new submission 
+        [HttpPost("CreateNewSubmission/{id}")]
+        public Task<IActionResult> CreateNewSubmission(Student student, IFormFile file)
         {
-            var std = await _dbContext.Students.FirstOrDefaultAsync(s=>s.Id==id);
-            _dbContext.Students.Remove(std);
-            await _dbContext.SaveChangesAsync();
-            return std;
+            throw new NotImplementedException();
         }
 
+        //method get all award received
+        [HttpGet("GetAllAwardReceived/{id}")]
+        public Task<IActionResult> GetAllAwardReceived()
+        {
+            throw new NotImplementedException();
+        }
+
+        //method get all submission highest mark
+        [HttpGet("GetAllSubmission")]
+        public Task<IActionResult> GetAllSubmission()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        //method get all art work in exhibition
+        [HttpGet("GetAllExhibitionArtwork")]
+        public Task<IActionResult> GetAllExhibitionArtwork()
+        {
+
+            throw new NotImplementedException();
+        }
+
+        //method get all submission_review
+        
+        [HttpGet("GetAllSubmissionReview/{id}")]
+        public Task<IActionResult> GetAllSubmissionReview(int id)
+        {
+            throw new NotImplementedException();
+        }
 
         //method update student
         [HttpPut("UpdateStudent/{id}")]
