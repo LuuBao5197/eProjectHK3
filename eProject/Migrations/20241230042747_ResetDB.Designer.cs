@@ -11,18 +11,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace eProject.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-<<<<<<<< HEAD:eProject/Migrations/20241230042747_ResetDB.Designer.cs
+
     [Migration("20241230042747_ResetDB")]
     partial class ResetDB
-========
-    [Migration("20241228160401_projectTB")]
-    partial class projectTB
->>>>>>>> 3c4d31dcf38cd5b202f876eb37c19b23df015a47:eProject/Migrations/20241228160401_projectTB.Designer.cs
+
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
-#pragma warning disable 612, 618
+
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
