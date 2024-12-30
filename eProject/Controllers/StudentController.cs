@@ -24,7 +24,7 @@ namespace eProject.Controllers
         }
 
         //method get one students
-        
+        [HttpGet("GetDetailStudent/{id}")]
         public async Task<IActionResult> GetDetailStudent(int id)
         {
             var student = await _dbContext.Students.FirstOrDefaultAsync(x => x.Id == id);
