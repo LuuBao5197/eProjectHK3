@@ -78,7 +78,22 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetAllSubmissions()
         {
             var submissions = await _dbContext.Submissions.ToListAsync();
+            if (submissions == null)
+            {
+                return NotFound("Can't Find Any Submissions");
+            }
             return Ok(submissions);
+        }
+
+        //Method Get all artwork that have been send to exhibition
+        public async Task<IActionResult> GetAllExhibitionArtwork()
+        {
+            var exhibitionArtwork = await _dbContext.ExhibitionArtworks.ToListAsync();
+            if (exhibitionArtwork == null)
+            {
+                return NotFound("There's nothing");
+            }
+            return Ok(exhibitionArtwork);
         }
     }
 }
