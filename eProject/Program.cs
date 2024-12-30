@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.FileProviders;
+using eProject.Repository;
 namespace eProject
 {
     public class Program
@@ -66,6 +67,18 @@ namespace eProject
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectDB"));
             });
+            builder.Services.AddCors(otp =>
+            {
+                otp.AddPolicy("reactChat", builder =>
+                {
+                    builder.WithOrigins("http://localhost:3000")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+                });
+            });
+
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -74,7 +87,10 @@ namespace eProject
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseCors(builder => builder
+           .AllowAnyOrigin()
+           .AllowAnyMethod()
+           .AllowAnyHeader());
             app.UseAuthorization();
             /*app.UseStaticFiles(new StaticFileOptions
             {
