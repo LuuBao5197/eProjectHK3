@@ -6,7 +6,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace eProject.Migrations
 {
     /// <inheritdoc />
+<<<<<<<< HEAD:eProject/Migrations/20241230042747_ResetDB.cs
     public partial class ResetDB : Migration
+========
+    public partial class projectTB : Migration
+>>>>>>>> 3c4d31dcf38cd5b202f876eb37c19b23df015a47:eProject/Migrations/20241228160401_projectTB.cs
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
