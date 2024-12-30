@@ -32,9 +32,9 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetAllContest()
         {
             var contests = await _dbContext.Contests.ToListAsync();
-            if(contests == null)
+            if (contests == null)
             {
-                return NotFound("Can't Find Any Contest");  
+                return NotFound("Can't Find Any Contest");
             }
             return Ok(contests);
         }
@@ -52,7 +52,7 @@ namespace eProject.Controllers
         }
 
         //Method Get all the prizes that have been awarded
-        [HttpGet("GetAllAward/{id}")]
+        [HttpGet("GetAllAward")]
         public async Task<IActionResult> GetAllAward()
         {
             var awards = await _dbContext.StudentAwards.ToListAsync();
@@ -64,6 +64,8 @@ namespace eProject.Controllers
         }
 
         //Method Get Detail of the prizes that have been awarded By Id
+        [HttpGet("GetAwardDetail/{id}")]
+
         public async Task<IActionResult> GetAwardDetail(int id)
         {
             var award = await _dbContext.StudentAwards.FindAsync(id);
@@ -75,6 +77,8 @@ namespace eProject.Controllers
         }
 
         //Method Get All Submissions
+        [HttpGet("GetAllSubmissions")]
+
         public async Task<IActionResult> GetAllSubmissions()
         {
             var submissions = await _dbContext.Submissions.ToListAsync();
@@ -86,6 +90,8 @@ namespace eProject.Controllers
         }
 
         //Method Get all artwork that have been send to exhibition
+        [HttpGet("GetAllExhibitionArtwork")]
+
         public async Task<IActionResult> GetAllExhibitionArtwork()
         {
             var exhibitionArtwork = await _dbContext.ExhibitionArtworks.ToListAsync();
