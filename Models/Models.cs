@@ -230,3 +230,40 @@ public class RatingLevel
 
     public ICollection<SubmissionReview>? SubmissionReviews { get; set; }
 }
+
+public class CreateStudentRequest
+{
+    public string Username { get; set; }
+    public string Password { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public DateTime Dob { get; set; }
+    public DateTime JoinDate { get; set; }
+    public DateTime EnrollmentDate { get; set; }
+    public string ParentName { get; set; }
+    public string ParentPhoneNumber { get; set; }
+    public ICollection<int>? ClassIds { get; set; }
+    public ICollection<int>? SubmissionIds { get; set; }
+    public ICollection<int>? AwardIds { get; set; }
+}
+
+public class CreateStaffRequest
+{
+    public string Username { get; set; }
+    public string Password { get; set; }
+    public string Role { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public DateTime JoinDate { get; set; }
+    public DateTime Dob { get; set; }
+
+    // Các mối quan hệ sẽ là danh sách các đối tượng ID hoặc chi tiết
+    public ICollection<int>? ClassIds { get; set; }
+    public ICollection<int>? StaffSubjectIds { get; set; }
+    public ICollection<int>? StaffQualificationIds { get; set; }
+    public ICollection<int>? ContestIds { get; set; }
+    public ICollection<int>? ExhibitionIds { get; set; }
+    public ICollection<int>? SubmissionReviewIds { get; set; }
+}
