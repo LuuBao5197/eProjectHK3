@@ -18,7 +18,7 @@ public class User
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpired { get; set; }
     public Student Student { get; set; }
-    public Staff Staff { get; set; }
+    public Staff? Staff { get; set; }
 
 
 }
