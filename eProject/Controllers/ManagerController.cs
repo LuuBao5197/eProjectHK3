@@ -15,6 +15,17 @@ namespace eProject.Controllers
             _dbContext = dbContext;
         }
 
+        //Method Get All Student
+        [HttpGet("GetAllStudent")]
+        public async Task<IActionResult> GetAllStudent()
+        {
+            var students = await _dbContext.Students.ToListAsync();
+            if(students == null || students.Count == 0)
+            {
+                return NotFound("Can't Find Any Student");
+            }
+            return Ok(students);
+        }
         //Method Get Student Detail By Id
         [HttpGet("GetStudentDetail/{id}")]
         public async Task<IActionResult> GetStudentDetail(int id)
