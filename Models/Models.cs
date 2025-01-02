@@ -18,7 +18,7 @@ public class User
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpired { get; set; }
     public Student Student { get; set; }
-    public Staff Staff { get; set; }
+    public Staff? Staff { get; set; }
 
 
 }
@@ -267,6 +267,5 @@ public class RatingLevel
     public int Id { get; set; }
     public string Name { get; set; }
     public int Mark { get; set; }
-
     public ICollection<SubmissionReview>? SubmissionReviews { get; set; }
 }
