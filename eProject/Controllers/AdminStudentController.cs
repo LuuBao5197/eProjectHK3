@@ -37,6 +37,7 @@ namespace eProject.Controllers
                 Status = true,
                 JoinDate = request.JoinDate,
                 Expired = DateTime.MaxValue,
+           /*     Token = Guid.NewGuid().ToString()*/
                 //Token = Guid.NewGuid().ToString()
             };
 
@@ -124,12 +125,12 @@ namespace eProject.Controllers
                     .ToListAsync();
             }
 
-            if (request.AwardIds != null)
+          /*  if (request.AwardIds != null)
             {
                 student.StudentAwards = await _dbContext.StudentAwards
                     .Where(s => request.AwardIds.Contains(s.Id))
                     .ToListAsync();
-            }
+            }*/
 
             // Lưu thay đổi vào cơ sở dữ liệu
             await _dbContext.SaveChangesAsync();
