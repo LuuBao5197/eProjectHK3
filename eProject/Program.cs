@@ -63,6 +63,7 @@ namespace eProject
             //Add service to send mail
             builder.Services
               .Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.AddScoped<EmailService>();
             builder.Services.AddDbContext<DatabaseContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectDB"));

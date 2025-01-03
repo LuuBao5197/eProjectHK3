@@ -65,9 +65,7 @@ namespace eProject.Controllers
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllStudents()
         {
-            var students = await _dbContext.Students
-                                           
-                                           .ToListAsync();
+            var students = await _dbContext.Students.ToListAsync();
 
             if (students == null || students.Count == 0)
             {
@@ -89,7 +87,6 @@ namespace eProject.Controllers
             var student = await _dbContext.Students
                                           .Include(s => s.StudentClasses)
                                           .Include(s => s.Submissions)
-                                          .Include(s => s.StudentAwards)
                                           .FirstOrDefaultAsync(s => s.Id == id);
 
             if (student == null)
