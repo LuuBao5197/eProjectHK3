@@ -37,7 +37,7 @@ namespace eProject.Controllers
                 Status = true,
                 JoinDate = request.JoinDate,
                 Expired = DateTime.MaxValue,
-                Token = Guid.NewGuid().ToString()
+                
             };
 
             // Lưu User vào cơ sở dữ liệu
@@ -56,7 +56,7 @@ namespace eProject.Controllers
                 StaffQualifications = request.StaffQualificationIds?.Select(qualificationId => new StaffQualification { QualificationId = qualificationId }).ToList(),
                 OrganizedContests = request.ContestIds?.Select(contestId => new Contest { Id = contestId }).ToList(),
                 OrganizedExhibitions = request.ExhibitionIds?.Select(exhibitionId => new Exhibition { Id = exhibitionId }).ToList(),
-                SubmissionReviews = request.SubmissionReviewIds?.Select(reviewId => new SubmissionReview { Id = reviewId }).ToList()
+                /*SubmissionReviews = request.SubmissionReviewIds?.Select(reviewId => new SubmissionReview { Id = reviewId }).ToList()*/
             };
 
             // Lưu Staff vào cơ sở dữ liệu
@@ -127,20 +127,20 @@ namespace eProject.Controllers
                     .ToListAsync();
             }
 
-            if (request.StaffSubjectIds != null)
+           /* if (request.StaffSubjectIds != null)
             {
                 staff.StaffSubjects = await _dbContext.StaffSubjects
                     .Where(s => request.StaffSubjectIds.Contains(s.Id))
                     .ToListAsync();
-            }
+            }*/
 
-            if (request.StaffQualificationIds != null)
+            /*if (request.StaffQualificationIds != null)
             {
                 staff.StaffQualifications = await _dbContext.StaffQualifications
                     .Where(s => request.StaffQualificationIds.Contains(s.Id))
                     .ToListAsync();
             }
-
+*/
             if (request.ContestIds != null)
             {
                 staff.OrganizedContests = await _dbContext.Contests
@@ -155,13 +155,13 @@ namespace eProject.Controllers
                     .ToListAsync();
             }
 
-            if (request.SubmissionReviewIds != null)
+           /* if (request.SubmissionReviewIds != null)
             {
                 staff.SubmissionReviews = await _dbContext.SubmissionReviews
                     .Where(s => request.SubmissionReviewIds.Contains(s.Id))
                     .ToListAsync();
             }
-
+*/
             // Lưu thay đổi vào cơ sở dữ liệu
             await _dbContext.SaveChangesAsync();
 
