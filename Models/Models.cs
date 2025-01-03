@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class User
 {
@@ -11,14 +12,15 @@ public class User
     public string Name { get; set; }
     public string Email { get; set; }
     public string Phone { get; set; }
-    public string Token { get; set; }
     public bool Status { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime Expired { get; set; }
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpired { get; set; }
     public Student Student { get; set; }
-    public Staff Staff { get; set; }
+    public Staff? Staff { get; set; }
+
+
 }
 
 public class UserAuth
@@ -39,6 +41,44 @@ public class Student
     public ICollection<Submission>? Submissions { get; set; }
     public ICollection<StudentAward>? StudentAwards { get; set; }
 }
+public class CreateStudentRequest
+{
+    public string Username { get; set; }
+    public string Password { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public DateTime Dob { get; set; }
+    public DateTime JoinDate { get; set; }
+    public DateTime EnrollmentDate { get; set; }
+    public string ParentName { get; set; }
+    public string ParentPhoneNumber { get; set; }
+    public ICollection<int>? ClassIds { get; set; }
+    public ICollection<int>? SubmissionIds { get; set; }
+    public ICollection<int>? AwardIds { get; set; }
+}
+
+public class CreateStaffRequest
+{
+    public string Username { get; set; }
+    public string Password { get; set; }
+    public string Role { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public DateTime JoinDate { get; set; }
+    public DateTime Dob { get; set; }
+
+    // Các mối quan hệ sẽ là danh sách các đối tượng ID hoặc chi tiết
+    public ICollection<int>? ClassIds { get; set; }
+    public ICollection<int>? StaffSubjectIds { get; set; }
+    public ICollection<int>? StaffQualificationIds { get; set; }
+    public ICollection<int>? ContestIds { get; set; }
+    public ICollection<int>? ExhibitionIds { get; set; }
+    public ICollection<int>? SubmissionReviewIds { get; set; }
+}
+
+
 
 public class Staff
 {
@@ -66,7 +106,6 @@ public class Qualification
 
 public class StaffQualification
 {
-    public int Id { get; set; }
     public int StaffId { get; set; }
     public int QualificationId { get; set; }
 
@@ -96,7 +135,6 @@ public class Subject
 
 public class StaffSubject
 {
-    public int Id { get; set; }
     public int StaffId { get; set; }
     public int SubjectId { get; set; }
 
@@ -106,7 +144,6 @@ public class StaffSubject
 
 public class StudentClass
 {
-    public int Id { get; set; }
     public int StudentId { get; set; }
     public int ClassId { get; set; }
 
@@ -165,7 +202,6 @@ public class Artwork
 
 public class SubmissionReview
 {
-    public int Id { get; set; }
     public int SubmissionId { get; set; }
     public int StaffId { get; set; }
     public int RatingId { get; set; }
@@ -190,9 +226,9 @@ public class Exhibition
     public ICollection<ExhibitionArtwork>? ExhibitionArtworks { get; set; }
 }
 
+
 public class ExhibitionArtwork
 {
-    public int Id { get; set; }
     public int ExhibitionId { get; set; }
     public int ArtworkId { get; set; }
 
@@ -214,7 +250,6 @@ public class Award
 
 public class StudentAward
 {
-    public int Id { get; set; }
     public int StudentId { get; set; }
     public int AwardId { get; set; }
 
@@ -227,6 +262,5 @@ public class RatingLevel
     public int Id { get; set; }
     public string Name { get; set; }
     public int Mark { get; set; }
-
     public ICollection<SubmissionReview>? SubmissionReviews { get; set; }
 }

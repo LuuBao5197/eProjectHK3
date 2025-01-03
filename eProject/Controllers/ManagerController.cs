@@ -15,6 +15,17 @@ namespace eProject.Controllers
             _dbContext = dbContext;
         }
 
+        //Method Get All Student
+        [HttpGet("GetAllStudent")]
+        public async Task<IActionResult> GetAllStudent()
+        {
+            var students = await _dbContext.Students.ToListAsync();
+            if(students == null || students.Count == 0)
+            {
+                return NotFound("Can't Find Any Student");
+            }
+            return Ok(students);
+        }
         //Method Get Student Detail By Id
         [HttpGet("GetStudentDetail/{id}")]
         public async Task<IActionResult> GetStudentDetail(int id)
@@ -63,6 +74,7 @@ namespace eProject.Controllers
             return Ok(awards);
         }
 
+        //[HttpGet("GetAwardDetail/{id}")]
         //Method Get Detail of the prizes that have been awarded By Id
         [HttpGet("GetAwardDetail/{id}")]
 
@@ -76,6 +88,7 @@ namespace eProject.Controllers
             return Ok(award);
         }
 
+        //[HttpGet("GetAllSubmissions")]
         //Method Get All Submissions
         [HttpGet("GetAllSubmissions")]
 
@@ -89,6 +102,7 @@ namespace eProject.Controllers
             return Ok(submissions);
         }
 
+        //[HttpGet("GetAllExhibitionArtwork")]
         //Method Get all artwork that have been send to exhibition
         [HttpGet("GetAllExhibitionArtwork")]
 
