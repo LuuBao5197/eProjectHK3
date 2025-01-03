@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using System.Xml;
 
 public class DatabaseContext : DbContext
 {
@@ -106,5 +108,17 @@ public class DatabaseContext : DbContext
             .WithMany(rl => rl.SubmissionReviews)
             .HasForeignKey(sr => sr.RatingId)
             .OnDelete(DeleteBehavior.Restrict);
+
+      /*  modelBuilder.Entity<StudentClass>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+        modelBuilder.Entity<StaffSubject>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+        modelBuilder.Entity<StudentAward>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+        modelBuilder.Entity<StaffQualification>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+        modelBuilder.Entity<SubmissionReview>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+        modelBuilder.Entity<ExhibitionArtwork>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+*/
     }
 }
