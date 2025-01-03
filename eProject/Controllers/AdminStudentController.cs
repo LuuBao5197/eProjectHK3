@@ -37,7 +37,8 @@ namespace eProject.Controllers
                 Status = true,
                 JoinDate = request.JoinDate,
                 Expired = DateTime.MaxValue,
-                Token = Guid.NewGuid().ToString()
+           /*     Token = Guid.NewGuid().ToString()*/
+                //Token = Guid.NewGuid().ToString()
             };
 
             // Lưu User vào cơ sở dữ liệu
@@ -51,9 +52,7 @@ namespace eProject.Controllers
                 EnrollmentDate = request.EnrollmentDate,
                 ParentName = request.ParentName,
                 ParentPhoneNumber = request.ParentPhoneNumber,
-                StudentClasses = request.ClassIds?.Select(classId => new StudentClass { ClassId = classId }).ToList(),
-                Submissions = request.SubmissionIds?.Select(submissionId => new Submission { Id = submissionId }).ToList(),
-                StudentAwards = request.AwardIds?.Select(awardId => new StudentAward { AwardId = awardId }).ToList()
+                StudentClasses = request.ClassIds?.Select(classId => new StudentClass { ClassId = classId }).ToList()
             };
 
             // Lưu Student vào cơ sở dữ liệu
@@ -66,12 +65,7 @@ namespace eProject.Controllers
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllStudents()
         {
-            var students = await _dbContext.Students
-                                           .Include(s => s.User)
-                                           .Include(s => s.StudentClasses)
-                                           .Include(s => s.Submissions)
-                                           .Include(s => s.StudentAwards)
-                                           .ToListAsync();
+            var students = await _dbContext.Students.ToListAsync();
 
             if (students == null || students.Count == 0)
             {
@@ -93,7 +87,6 @@ namespace eProject.Controllers
             var student = await _dbContext.Students
                                           .Include(s => s.StudentClasses)
                                           .Include(s => s.Submissions)
-                                          .Include(s => s.StudentAwards)
                                           .FirstOrDefaultAsync(s => s.Id == id);
 
             if (student == null)
@@ -129,12 +122,12 @@ namespace eProject.Controllers
                     .ToListAsync();
             }
 
-            if (request.AwardIds != null)
+          /*  if (request.AwardIds != null)
             {
                 student.StudentAwards = await _dbContext.StudentAwards
                     .Where(s => request.AwardIds.Contains(s.Id))
                     .ToListAsync();
-            }
+            }*/
 
             // Lưu thay đổi vào cơ sở dữ liệu
             await _dbContext.SaveChangesAsync();
