@@ -37,7 +37,7 @@ namespace eProject.Controllers
                 Status = true,
                 JoinDate = request.JoinDate,
                 Expired = DateTime.MaxValue,
-                Token = Guid.NewGuid().ToString()
+           /*     Token = Guid.NewGuid().ToString()*/
             };
 
             // Lưu User vào cơ sở dữ liệu

@@ -11,7 +11,6 @@ public class User
     public string Name { get; set; }
     public string Email { get; set; }
     public string Phone { get; set; }
-    public string Token { get; set; }
     public bool Status { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime Expired { get; set; }
