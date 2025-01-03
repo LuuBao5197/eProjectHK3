@@ -27,7 +27,7 @@ namespace eProject.EmailServices
                     Port = _emailSettings.Port,
                     EnableSsl = _emailSettings.EnableSsl,
                     DeliveryMethod = SmtpDeliveryMethod.Network,
-                    Credentials = new NetworkCredential(_emailSettings.UserName, _emailSettings.Password)
+                    Credentials = new NetworkCredential(_emailSettings.Username, _emailSettings.Password)
                 };
 
                 using var ms = new MailMessage(fromAddress, toAddress)
