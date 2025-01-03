@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class User
 {
@@ -11,7 +12,6 @@ public class User
     public string Name { get; set; }
     public string Email { get; set; }
     public string Phone { get; set; }
-    public string Token { get; set; }
     public bool Status { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime Expired { get; set; }
@@ -106,7 +106,6 @@ public class Qualification
 
 public class StaffQualification
 {
-    public int Id { get; set; }
     public int StaffId { get; set; }
     public int QualificationId { get; set; }
 
@@ -136,7 +135,6 @@ public class Subject
 
 public class StaffSubject
 {
-    public int Id { get; set; }
     public int StaffId { get; set; }
     public int SubjectId { get; set; }
 
@@ -146,7 +144,6 @@ public class StaffSubject
 
 public class StudentClass
 {
-    public int Id { get; set; }
     public int StudentId { get; set; }
     public int ClassId { get; set; }
 
@@ -205,7 +202,6 @@ public class Artwork
 
 public class SubmissionReview
 {
-    public int Id { get; set; }
     public int SubmissionId { get; set; }
     public int StaffId { get; set; }
     public int RatingId { get; set; }
@@ -230,9 +226,9 @@ public class Exhibition
     public ICollection<ExhibitionArtwork>? ExhibitionArtworks { get; set; }
 }
 
+
 public class ExhibitionArtwork
 {
-    public int Id { get; set; }
     public int ExhibitionId { get; set; }
     public int ArtworkId { get; set; }
 
@@ -254,7 +250,6 @@ public class Award
 
 public class StudentAward
 {
-    public int Id { get; set; }
     public int StudentId { get; set; }
     public int AwardId { get; set; }
 

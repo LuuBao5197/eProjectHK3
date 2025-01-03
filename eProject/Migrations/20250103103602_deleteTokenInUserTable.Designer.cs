@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace eProject.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250103103602_deleteTokenInUserTable")]
+    partial class deleteTokenInUserTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -199,6 +202,9 @@ namespace eProject.Migrations
                     b.Property<int>("ArtworkId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
                     b.HasKey("ExhibitionId", "ArtworkId");
 
                     b.HasIndex("ArtworkId");
@@ -276,6 +282,9 @@ namespace eProject.Migrations
                     b.Property<int>("QualificationId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
                     b.HasKey("StaffId", "QualificationId");
 
                     b.HasIndex("QualificationId");
@@ -289,6 +298,9 @@ namespace eProject.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Id")
                         .HasColumnType("int");
 
                     b.HasKey("StaffId", "SubjectId");
@@ -336,6 +348,9 @@ namespace eProject.Migrations
                     b.Property<int>("AwardId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
                     b.HasKey("StudentId", "AwardId");
 
                     b.HasIndex("AwardId");
@@ -349,6 +364,9 @@ namespace eProject.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("ClassId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Id")
                         .HasColumnType("int");
 
                     b.HasKey("StudentId", "ClassId");
@@ -419,6 +437,9 @@ namespace eProject.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("StaffId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Id")
                         .HasColumnType("int");
 
                     b.Property<int>("RatingId")
