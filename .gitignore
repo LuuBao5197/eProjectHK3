@@ -360,5 +360,6 @@ MigrationBackup/
 .ionide/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-#File cau hinh project API
-eProject/appsettings.json
+
+#appsetting.json
+/eProject/appsettings.json

@@ -1,4 +1,5 @@
-﻿using eProject.Helpers;
+﻿using eProject.EmailServices;
+using eProject.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,11 +11,14 @@ namespace eProject.Controllers
     public class AddminStaffController : ControllerBase
     {
         private readonly DatabaseContext _dbContext;
+        private readonly EmailService _emailService;
 
-        public AddminStaffController(DatabaseContext dbContext)
+        public AddminStaffController(DatabaseContext dbContext, EmailService emailService)
         {
             _dbContext = dbContext;
+            _emailService = emailService;
         }
+
 
         [HttpPost("staff")]
         public async Task<IActionResult> AddStaff(CreateStaffRequest request)
@@ -28,7 +32,7 @@ namespace eProject.Controllers
             var user = new User
             {
                 Username = request.Username,
-                Password = request.Password,
+                Password = request.Password, // Bạn có thể mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
                 Role = "staff", // Gán role là staff
                 Name = request.Name,
                 Email = request.Email,
@@ -37,7 +41,6 @@ namespace eProject.Controllers
                 Status = true,
                 JoinDate = request.JoinDate,
                 Expired = DateTime.MaxValue,
-                /*Token = Guid.NewGuid().ToString()*/
             };
 
             // Lưu User vào cơ sở dữ liệu
@@ -49,22 +52,42 @@ namespace eProject.Controllers
             {
                 UserId = user.Id, // Gán UserId đã tạo cho Staff
                 JoinDate = request.JoinDate,
-
-                // Gán các mối quan hệ cho Staff
                 Classes = request.ClassIds?.Select(classId => new Class { Id = classId }).ToList(),
                 StaffSubjects = request.StaffSubjectIds?.Select(subjectId => new StaffSubject { SubjectId = subjectId }).ToList(),
                 StaffQualifications = request.StaffQualificationIds?.Select(qualificationId => new StaffQualification { QualificationId = qualificationId }).ToList(),
                 OrganizedContests = request.ContestIds?.Select(contestId => new Contest { Id = contestId }).ToList(),
                 OrganizedExhibitions = request.ExhibitionIds?.Select(exhibitionId => new Exhibition { Id = exhibitionId }).ToList(),
-               /* SubmissionReviews = request.SubmissionReviewIds?.Select(reviewId => new SubmissionReview { Id = reviewId }).ToList()*/
             };
 
             // Lưu Staff vào cơ sở dữ liệu
             _dbContext.Staff.Add(staff);
             await _dbContext.SaveChangesAsync();
 
-            return Ok(new { message = "Staff created successfully", staff = staff });
+            // Tạo đối tượng EmailRequest
+            var emailRequest = new EmailRequest
+            {
+                ToMail = user.Email,
+                Subject = "Welcome to Our System",
+                HtmlContent = $"Dear {user.Name},<br/><br/>" +
+                              "Your account has been successfully created. Below are your login details:<br/>" +
+                              $"<b>Password:</b> {user.Password}<br/><br/>" +
+                              "Best regards,<br/>The Team"
+            };
+
+            try
+            {
+                // Gửi email thông báo và mật khẩu cho staff
+                await _emailService.SendMailAsync(emailRequest);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error sending email: {ex.Message}");
+            }
+
+            return Ok(new { message = "Staff created successfully and email sent.", staff = staff });
         }
+
+
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllStaff()
         {
