@@ -79,7 +79,7 @@ namespace eProject.Controllers
                    new Claim(ClaimTypes.Name,user.Name),
                     new Claim(ClaimTypes.Role,user.Role),
                      new Claim(ClaimTypes.Email,user.Email),
-
+                        new Claim("Id", user.Id.ToString()),
                }),
                 Expires = DateTime.UtcNow.AddMinutes(10),
                 //thong tin de ky token, su dung khoa
