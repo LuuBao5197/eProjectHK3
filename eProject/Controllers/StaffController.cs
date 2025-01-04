@@ -15,7 +15,7 @@ namespace eProject.Controllers
             _dbContext = dbContext;
         }
 
-        [HttpGet("GetAllStudent")]
+        [HttpGet("GetAllStudent{page}")]
         public async Task<IActionResult> GetAllStudent()
         {
             var students = await _dbContext.Students.ToListAsync();
@@ -29,13 +29,71 @@ namespace eProject.Controllers
         }
 
         //API RELATED CONTEST
-        [HttpGet("GetAllContest")]
+        /*        [HttpGet("GetAllContest")]
+                public async Task<IActionResult> GetAllContest(int page = 1, int pageSize = 6, string? search = null)
+                {
+                    var query = _dbContext.Contests.AsQueryable();
 
-        public async Task<IActionResult> GetAllContest()
+                    if (!string.IsNullOrEmpty(search))
+                    {
+                        query = query.Where(c => c.Name.Contains(search));
+                    }
+
+                    if (page <= 0 || pageSize <= 0)
+                    {
+                        return BadRequest("Page and pageSize must be greater than 0.");
+                    }
+
+                    // Tính toán số lượng mục bỏ qua (skip)
+                    var skip = (page - 1) * pageSize;
+
+                    // Lấy tổng số lượng contests
+                    var totalItems = await _dbContext.Contests.CountAsync();
+
+                    // Lấy dữ liệu phân trang
+                    var contests = await query
+                        .OrderBy(c => c.Id) // Sắp xếp theo ID (hoặc tiêu chí phù hợp)
+                        .Skip(skip)
+                        .Take(pageSize)
+                        .ToListAsync();
+
+                    // Trả về dữ liệu cùng thông tin phân trang
+                    var response = new
+                    {
+                        contests = contests,
+                        totalItems = totalItems,
+                        totalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                        currentPage = page
+                    };
+
+                    return Ok(response);
+                }*/
+
+        [HttpGet("GetAllContest")]
+        public async Task<IActionResult> GetAllContest(int page = 1, int pageSize = 10, string? search = null)
         {
-            var contests = await _dbContext.Contests.ToListAsync();
-            return Ok(contests);
+            var query = _dbContext.Contests.AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.Name.Contains(search));
+            }
+
+            var totalItems = await query.CountAsync();
+            var contests = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                contests,
+                totalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                totalItems
+            });
         }
+
+
 
         [HttpGet("GetDetailContest/{id}")]
         public async Task<IActionResult> GetDetailContest(int id)
