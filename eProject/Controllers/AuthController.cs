@@ -37,7 +37,7 @@ namespace eProject.Controllers
             var tokenString = GenerateToken(user);
             user.RefreshToken = Guid.NewGuid().ToString();
             user.RefreshTokenExpired = DateTime.UtcNow.AddDays(7);
-            await _userRepository.UpdateUserAsync(user);
+            await _userRepository.UpdateUser(user);
             return Ok(new { token = tokenString, refreshToken = user.RefreshToken });
         }
         [HttpPost("refresh-token")]
@@ -57,7 +57,7 @@ namespace eProject.Controllers
             var tokenString = GenerateToken(user);
             user.RefreshToken = Guid.NewGuid().ToString();
             user.RefreshTokenExpired = DateTime.UtcNow.AddDays(7);
-            await _userRepository.UpdateUserAsync(user);
+            await _userRepository.UpdateUser(user);
             return Ok(new { token = tokenString, refreshToken = user.RefreshToken });
         }
 

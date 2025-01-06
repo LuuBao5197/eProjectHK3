@@ -20,31 +20,29 @@ namespace eProject.Repository
 
         public async Task<User> DeleteUserAsync(int id)
         {
-            var user = await GetUserByIdAsync(id);
+            var user = await GetUserById(id);
             _dbContext.Users.Remove(user);
             await _dbContext.SaveChangesAsync();
             return user;
         }
 
-        public async Task<User> GetUserByIdAsync(int id)
+        public async Task<User> GetUserById(int Id)
         {
-            var user = await _dbContext.Users.FindAsync(id);
-                return user;
+            var user = await _dbContext.Users
+                    .FirstOrDefaultAsync(x => x.Id == Id);
+            return user;
         }
-
         public async Task<IEnumerable<User>> GetUsersAsync()
         {
             var users = await _dbContext.Users.ToListAsync();
             return users;
         }
 
-        public async Task<User> UpdateUserAsync(User user)
+        public async Task<User> UpdateUser(User userExisting)
         {
-            var userExisting = await GetUserByIdAsync(user.Id);
-             _dbContext.Entry(userExisting).CurrentValues.SetValues(user);
+            _dbContext.Users.Entry(userExisting).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync();
-            return user;
-
+            return userExisting;
         }
     }
 }

@@ -17,22 +17,36 @@ public class User
     public DateTime Expired { get; set; }
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpired { get; set; }
+    public string? Imagepath { get; set; }
     public Student Student { get; set; }
     public Staff? Staff { get; set; }
 
 
 }
+public class CreateUserDto
+{
+    public string Username { get; set; }
+    public string Password { get; set; }
+    public string Role { get; set; }
+    public string Dob { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+}
+
+
 public class UpdateUserDto
 {
     public string? Username { get; set; }
     public string? Password { get; set; }
     public string? Role { get; set; }
     public string? Name { get; set; }
+    public string? Dob { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public bool? Status { get; set; }
+    public string? Imagepath { get; set; }
 }
-
 public class UserAuth
 {
     public string Email { get; set; }
