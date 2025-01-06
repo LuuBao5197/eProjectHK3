@@ -29,9 +29,9 @@ namespace eProject.Controllers
         [HttpGet("{id}")]
         public IActionResult GetUser(int id)
         {
-            var exhibition = _dbContext.Exhibitions.Find(id);
-            if (exhibition == null) return NotFound();
-            return Ok(exhibition);
+            var user = _dbContext.Users.Find(id);
+            if (user == null) return NotFound();
+            return Ok(user);
         }
 
 
@@ -43,13 +43,60 @@ namespace eProject.Controllers
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
         }
 
-        [HttpPut("{id}")]
-        public IActionResult UpdateUser(int id, User user)
+        [HttpPatch("{id}")]
+        public IActionResult PartialUpdateUser(int id, [FromBody] UpdateUserDto userDto)
         {
-            _dbContext.Users.Update(user);
-            _dbContext.SaveChanges();
-            return Ok(user);
+            // Retrieve the existing user from the database
+            var existingUser = _dbContext.Users.Find(id);
+            if (existingUser == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            // Update only the fields that are provided in the DTO
+            if (!string.IsNullOrEmpty(userDto.Username))
+            {
+                existingUser.Username = userDto.Username;
+            }
+            if (!string.IsNullOrEmpty(userDto.Password))
+            {
+                existingUser.Password = userDto.Password; // Ensure hashing if needed
+            }
+            if (!string.IsNullOrEmpty(userDto.Role))
+            {
+                existingUser.Role = userDto.Role;
+            }
+            if (!string.IsNullOrEmpty(userDto.Name))
+            {
+                existingUser.Name = userDto.Name;
+            }
+            if (!string.IsNullOrEmpty(userDto.Email))
+            {
+                existingUser.Email = userDto.Email;
+            }
+            if (!string.IsNullOrEmpty(userDto.Phone))
+            {
+                existingUser.Phone = userDto.Phone;
+            }
+            if (userDto.Status.HasValue)
+            {
+                existingUser.Status = userDto.Status.Value;
+            }
+
+            try
+            {
+                // Save changes to the database
+                _dbContext.SaveChanges();
+                return NoContent();
+            }
+            catch (DbUpdateException ex)
+            {
+                // Log the exception and return a meaningful error
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "An error occurred while updating the user. Please try again.");
+            }
         }
+
 
         [HttpDelete("{id}")]
         public IActionResult DeleteUser(int id)
