@@ -4,7 +4,7 @@
     {
         public int Status { get; }
         public string Message { get; }
-        public Object? Data {  get; }
+        public object? Data {  get; }
 
         public APIRespone(int status, string message, object? data)
         {

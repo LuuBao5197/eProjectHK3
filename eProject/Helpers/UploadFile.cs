@@ -3,7 +3,7 @@
     public class UploadFile
     {
         static readonly string baseFolder = "Uploads";
-        static readonly string rootUrl = "https://localhost:7279/";
+        static readonly string rootUrl = "http://localhost:5190/";
         public static async Task<string> SaveImage(string subFolder, IFormFile formFile)
         {
             string imageName = Guid.NewGuid().ToString() + "_" + formFile.FileName;
@@ -17,11 +17,8 @@
             {
                 await formFile.CopyToAsync(fileStream);
             }
-            return  Path.Combine(rootUrl, baseFolder, subFolder, imageName).Replace("\\","/");
-  /*          return rootUrl + Path.Combine(baseFolder, subFolder, imageName).Replace("\\", "/");*/
-
+            return rootUrl + Path.Combine(baseFolder, subFolder, imageName).Replace("\\", "/");
         }
-
         public static void DeleteImage(string urlImage)
         {
             var exactPath = urlImage.Substring(rootUrl.Length);
@@ -30,5 +27,5 @@
                 File.Delete(exactPath);
             }
         }
-    }
+    };
 }
