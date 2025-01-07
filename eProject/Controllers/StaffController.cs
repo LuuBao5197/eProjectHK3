@@ -137,6 +137,18 @@ namespace eProject.Controllers
                 totalItems
             });
         }
+        [HttpGet("GetDetailAward/{id}")]
+        public async Task<IActionResult> GetDetailAward(int id)
+        {
+
+            var award = _dbContext.Awards!
+        .Include(a => a.Contest) // Bao gồm thông tin cuộc thi
+        .Include(a => a.StudentAwards!) // Bao gồm danh sách giải thưởng sinh viên
+        .ThenInclude(sa => sa.Student) // Bao gồm thông tin sinh viên
+        .ThenInclude(st=>st!.User) // Bao gom thong tin user
+        .FirstOrDefault(a => a.Id == id);
+            return Ok();
+        }
 
         [HttpPost("AddAward")]
         public async Task<IActionResult> AddAward(Award award)
