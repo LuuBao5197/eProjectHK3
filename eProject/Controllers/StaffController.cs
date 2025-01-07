@@ -147,7 +147,7 @@ namespace eProject.Controllers
         .ThenInclude(sa => sa.Student) // Bao gồm thông tin sinh viên
         .ThenInclude(st=>st!.User) // Bao gom thong tin user
         .FirstOrDefault(a => a.Id == id);
-            return Ok();
+            return Ok(award);
         }
 
         [HttpPost("AddAward")]
