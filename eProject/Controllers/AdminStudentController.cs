@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using eProject.EmailServices;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,9 +11,12 @@ namespace eProject.Controllers
     {
         private readonly DatabaseContext _dbContext;
 
-        public AddminStudentController(DatabaseContext dbContext)
+        private readonly EmailService _emailService;
+
+        public AddminStudentController(DatabaseContext dbContext, EmailService emailService)
         {
             _dbContext = dbContext;
+            _emailService = emailService;
         }
         // Tạo Student
 
@@ -24,48 +28,203 @@ namespace eProject.Controllers
                 return BadRequest("Invalid data.");
             }
 
-            // Tạo đối tượng User
-            var user = new User
+            using (var transaction = await _dbContext.Database.BeginTransactionAsync())
             {
-                Username = request.Username,
-                Password = request.Password,
-                Role = "student", // Gán role là student
-                Name = request.Name,
-                Email = request.Email,
-                Phone = request.Phone,
-                Dob = request.Dob.ToString("yyyy-MM-dd"),
-                Status = true,
-                JoinDate = request.JoinDate,
-                Expired = DateTime.MaxValue,
-           /*     Token = Guid.NewGuid().ToString()*/
-                //Token = Guid.NewGuid().ToString()
-            };
+                try
+                {
+                    // Tạo đối tượng User
+                    var user = new User
+                    {
+                        Username = request.Username,
+                        Password = request.Password,
+                        Role = "student", // Gán role là student
+                        Name = request.Name,
+                        Email = request.Email,
+                        Phone = request.Phone,
+                        Dob = request.Dob.ToString("yyyy-MM-dd"),
+                        Status = true,
+                        JoinDate = request.JoinDate,
+                        Expired = DateTime.MaxValue,
+                        // Token = Guid.NewGuid().ToString() // Uncomment nếu cần token
+                    };
 
-            // Lưu User vào cơ sở dữ liệu
-            _dbContext.Users.Add(user);
-            await _dbContext.SaveChangesAsync();
+                    // Lưu User vào cơ sở dữ liệu
+                    _dbContext.Users.Add(user);
+                    await _dbContext.SaveChangesAsync();
 
-            // Tạo đối tượng Student và gán UserId cho Student
-            var student = new Student
-            {
-                UserId = user.Id,
-                EnrollmentDate = request.EnrollmentDate,
-                ParentName = request.ParentName,
-                ParentPhoneNumber = request.ParentPhoneNumber,
-                StudentClasses = request.ClassIds?.Select(classId => new StudentClass { ClassId = classId }).ToList()
-            };
+                    // Tạo đối tượng Student và gán UserId cho Student
+                    var student = new Student
+                    {
+                        UserId = user.Id,
+                        EnrollmentDate = request.EnrollmentDate,
+                        ParentName = request.ParentName,
+                        ParentPhoneNumber = request.ParentPhoneNumber,
+                        StudentClasses = request.ClassIds?.Select(classId => new StudentClass { ClassId = classId }).ToList()
+                    };
 
-            // Lưu Student vào cơ sở dữ liệu
-            _dbContext.Students.Add(student);
-            await _dbContext.SaveChangesAsync();
+                    // Lưu Student vào cơ sở dữ liệu
+                    _dbContext.Students.Add(student);
+                    await _dbContext.SaveChangesAsync();
 
-            return Ok(new { message = "Student created successfully", student = student });
+                    // Commit transaction
+                    await transaction.CommitAsync();
+
+                    // Gửi email thông báo
+                    var emailRequest = new EmailRequest
+                    {
+                        ToMail = user.Email,
+                        Subject = "Welcome to Our System",
+                        HtmlContent = $"Dear {user.Name},<br/><br/>" +
+                                      "Your account has been successfully created. Below are your login details:<br/>" +
+                                      $"<b>Username:</b> {user.Username}<br/>" +
+                                      $"<b>Password:</b> {user.Password}<br/><br/>" +
+                                      "Best regards,<br/>The Team"
+                    };
+
+                    try
+                    {
+                        await _emailService.SendMailAsync(emailRequest);
+                    }
+                    catch (Exception ex)
+                    {
+                        return StatusCode(500, $"Error sending email: {ex.Message}");
+                    }
+
+                    return Ok(new { message = "Student created successfully, email sent", student = student });
+                }
+                catch (Exception)
+                {
+                    // Rollback transaction nếu có lỗi xảy ra
+                    await transaction.RollbackAsync();
+                    return StatusCode(500, "An error occurred while creating the student.");
+                }
+            }
         }
+        [HttpPost("import-students")]
+        public async Task<IActionResult> ImportStudents(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("File is missing or empty.");
+            }
+
+            var students = new List<Student>();
+            var emailErrors = new List<string>();
+
+            using (var transaction = await _dbContext.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    using (var stream = file.OpenReadStream())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        string line;
+                        bool isFirstLine = true;
+
+                        // Đọc từng dòng trong file
+                        while ((line = await reader.ReadLineAsync()) != null)
+                        {
+                            // Bỏ qua dòng tiêu đề
+                            if (isFirstLine)
+                            {
+                                isFirstLine = false;
+                                continue;
+                            }
+
+                            // Tách các trường từ dòng
+                            var fields = line.Split(',');
+
+                            if (fields.Length < 10)
+                            {
+                                return BadRequest($"Invalid data format in line: {line}");
+                            }
+
+                            // Tạo đối tượng User
+                            var user = new User
+                            {
+                                Username = fields[0],
+                                Password = fields[1],
+                                Role = "student",
+                                Name = fields[2],
+                                Email = fields[3],
+                                Phone = fields[4],
+                                Dob = DateTime.Parse(fields[5]).ToString("yyyy-MM-dd"),
+                                JoinDate = DateTime.Parse(fields[6]),
+                                Expired = DateTime.MaxValue
+                            };
+
+                            // Lưu User vào cơ sở dữ liệu
+                            _dbContext.Users.Add(user);
+                            await _dbContext.SaveChangesAsync();
+
+                            // Tạo đối tượng Student
+                            var student = new Student
+                            {
+                                UserId = user.Id,
+                                EnrollmentDate = DateTime.Parse(fields[7]),
+                                ParentName = fields[8],
+                                ParentPhoneNumber = fields[9],
+                                StudentClasses = fields.Length > 10
+                                    ? fields[10].Split('|').Select(classId => new StudentClass { ClassId = int.Parse(classId) }).ToList()
+                                    : null
+                            };
+
+                            students.Add(student);
+                            _dbContext.Students.Add(student);
+                            await _dbContext.SaveChangesAsync();
+
+                            // Gửi email
+                            var emailRequest = new EmailRequest
+                            {
+                                ToMail = user.Email,
+                                Subject = "Welcome to Our System",
+                                HtmlContent = $"Dear {user.Name},<br/><br/>" +
+                                              "Your account has been successfully created. Below are your login details:<br/>" +
+                                              $"<b>Username:</b> {user.Email}<br/>" +
+                                              $"<b>Password:</b> {user.Password}<br/><br/>" +
+                                              "Best regards,<br/>The Team"
+                            };
+
+                            try
+                            {
+                                await _emailService.SendMailAsync(emailRequest);
+                            }
+                            catch (Exception ex)
+                            {
+                                emailErrors.Add($"Error sending email to {user.Email}: {ex.Message}");
+                            }
+                        }
+                    }
+
+                    // Commit transaction
+                    await transaction.CommitAsync();
+
+                    return Ok(new
+                    {
+                        message = "Students imported successfully",
+                        emailErrors = emailErrors.Any() ? emailErrors : null,
+                        students = students
+                    });
+                }
+                catch (Exception ex)
+                {
+                    var innerException = ex.InnerException != null ? ex.InnerException.Message : "No inner exception";
+                    return StatusCode(500, $"Error importing students: {ex.Message}. Inner exception: {innerException}");
+                }
+
+            }
+        }
+
+
+
         // Lấy tất cả Student
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllStudents()
         {
-            var students = await _dbContext.Students.ToListAsync();
+            var students = await _dbContext.Users
+                                            .Where(u => u.Role == "student")
+                                            .Include(u => u.Student)  // Lấy thông tin Staff kèm theo User
+                                            .ToListAsync();
 
             if (students == null || students.Count == 0)
             {
@@ -122,12 +281,12 @@ namespace eProject.Controllers
                     .ToListAsync();
             }
 
-          /*  if (request.AwardIds != null)
-            {
-                student.StudentAwards = await _dbContext.StudentAwards
-                    .Where(s => request.AwardIds.Contains(s.Id))
-                    .ToListAsync();
-            }*/
+            /*  if (request.AwardIds != null)
+              {
+                  student.StudentAwards = await _dbContext.StudentAwards
+                      .Where(s => request.AwardIds.Contains(s.Id))
+                      .ToListAsync();
+              }*/
 
             // Lưu thay đổi vào cơ sở dữ liệu
             await _dbContext.SaveChangesAsync();
