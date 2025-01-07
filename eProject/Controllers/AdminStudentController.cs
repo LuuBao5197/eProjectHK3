@@ -221,7 +221,10 @@ namespace eProject.Controllers
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllStudents()
         {
-            var students = await _dbContext.Students.ToListAsync();
+            var students = await _dbContext.Users
+                                            .Where(u => u.Role == "student")
+                                            .Include(u => u.Student)  // Lấy thông tin Staff kèm theo User
+                                            .ToListAsync();
 
             if (students == null || students.Count == 0)
             {
