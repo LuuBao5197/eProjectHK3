@@ -13,7 +13,7 @@ namespace eProject.Controllers
 
         private readonly EmailService _emailService;
 
-        public AddminStudentController(DatabaseContext dbContext , EmailService emailService)
+        public AddminStudentController(DatabaseContext dbContext, EmailService emailService)
         {
             _dbContext = dbContext;
             _emailService = emailService;
@@ -278,12 +278,12 @@ namespace eProject.Controllers
                     .ToListAsync();
             }
 
-          /*  if (request.AwardIds != null)
-            {
-                student.StudentAwards = await _dbContext.StudentAwards
-                    .Where(s => request.AwardIds.Contains(s.Id))
-                    .ToListAsync();
-            }*/
+            /*  if (request.AwardIds != null)
+              {
+                  student.StudentAwards = await _dbContext.StudentAwards
+                      .Where(s => request.AwardIds.Contains(s.Id))
+                      .ToListAsync();
+              }*/
 
             // Lưu thay đổi vào cơ sở dữ liệu
             await _dbContext.SaveChangesAsync();
