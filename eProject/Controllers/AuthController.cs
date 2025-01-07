@@ -1,8 +1,11 @@
-﻿using eProject.Repository;
+﻿using eProject.Helpers;
+using eProject.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 
@@ -91,10 +94,84 @@ namespace eProject.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            var users = await _userRepository.GetUsersAsync();
+            var user = users.FirstOrDefault(u => u.Email == email);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            // Tạo OTP ngẫu nhiên
+            var otp = new Random().Next(100000, 999999).ToString(); // OTP 6 chữ số
+            user.OTP = otp;
+            user.OTPExpired = DateTime.UtcNow.AddMinutes(5); // OTP hết hạn sau 5 phút
+            await _userRepository.UpdateUser(user);
+
+            // Gửi OTP qua email
+            SendEmail(user.Email, "Reset Password OTP", $"Your OTP is: {otp}");
+
+            return Ok("OTP has been sent to your email.");
+        }
+
+
+
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOTP(VerifyOTPRequest request)
+        {
+            var users = await _userRepository.GetUsersAsync();
+            var user = users.FirstOrDefault(u => u.Email == request.Email);
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            if (user.OTP != request.OTP || user.OTPExpired < DateTime.UtcNow)
+            {
+                return BadRequest("Invalid or expired OTP");
+            }
+
+            // Nếu OTP hợp lệ, đặt lại mật khẩu
+            user.Password = request.NewPassword;
+            user.OTP = null; // Xóa OTP sau khi sử dụng
+            user.OTPExpired = null;
+            await _userRepository.UpdateUser(user);
+
+            return Ok("Password has been reset successfully.");
+        }
+        private void SendEmail(string toEmail, string subject, string body)
+        {
+            // Đọc cấu hình email từ appsettings.json
+            var emailSettings = _configuration.GetSection("EmailSettings");
+
+            var smtpClient = new SmtpClient
+            {
+                Host = emailSettings["Host"], // Địa chỉ SMTP server (ví dụ: smtp.gmail.com)
+                Port = int.Parse(emailSettings["Port"]), // Port SMTP (ví dụ: 587)
+                Credentials = new NetworkCredential(emailSettings["Username"], emailSettings["Password"]), // Tài khoản email
+                EnableSsl = bool.Parse(emailSettings["EnableSsl"]) // Bật SSL
+            };
+
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(emailSettings["Username"]), // Địa chỉ email gửi đi
+                Subject = subject,
+                Body = body,
+                IsBodyHtml = true // Nội dung email là HTML
+            };
+
+            mailMessage.To.Add(toEmail); // Địa chỉ email nhận
+
+            // Gửi email
+            smtpClient.Send(mailMessage);
+        }
     }
     public class TokenRequest
     {
         public string RefreshToken { get; set; }
     }
-
 }

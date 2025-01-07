@@ -17,6 +17,8 @@ public class User
     public DateTime Expired { get; set; }
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpired { get; set; }
+    public string? OTP { get; set; } // Lưu mã OTP
+    public DateTime? OTPExpired { get; set; } // Lưu thời gian hết hạn của OTP
     public string? Imagepath { get; set; }
     public Student Student { get; set; }
     public Staff? Staff { get; set; }
