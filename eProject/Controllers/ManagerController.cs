@@ -20,7 +20,7 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetAllStudent()
         {
             var students = await _dbContext.Students.ToListAsync();
-            if(students == null || students.Count == 0)
+            if (students == null || students.Count == 0)
             {
                 return NotFound("Can't Find Any Student");
             }
@@ -113,6 +113,18 @@ namespace eProject.Controllers
                 return NotFound("There's nothing");
             }
             return Ok(exhibitions);
+        }
+
+        [HttpGet("GetExhibitionDetail/{id}")]
+        //Method Get exhibition by id
+        public async Task<IActionResult> GetExhibitionDetail(int id)
+        {
+            var exhibition = await _dbContext.Exhibitions.FindAsync(id);
+            if (exhibition == null)
+            {
+                return NotFound("Can't Find This Award");
+            }
+            return Ok(exhibition);
         }
     }
 }
