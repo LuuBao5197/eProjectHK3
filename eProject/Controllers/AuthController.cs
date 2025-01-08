@@ -8,6 +8,7 @@ using System.Net.Mail;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Identity.Data;
 
 namespace eProject.Controllers
 {
@@ -135,14 +136,35 @@ namespace eProject.Controllers
                 return BadRequest("Invalid or expired OTP");
             }
 
-            // Nếu OTP hợp lệ, đặt lại mật khẩu
+            return Ok("OTP verified");
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(NewPasswordRequest request)
+        {
+            var users = await _userRepository.GetUsersAsync();
+            var user = users.FirstOrDefault(u => u.Email == request.Email);
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            // Cập nhật mật khẩu mới
             user.Password = request.NewPassword;
-            user.OTP = null; // Xóa OTP sau khi sử dụng
-            user.OTPExpired = null;
+
+            // Xóa OTP và ngày hết hạn OTP sau khi cập nhật mật khẩu
+            user.OTP = null; // Đặt OTP thành null để tránh tái sử dụng
+            user.OTPExpired = null; // Đặt ngày hết hạn OTP thành null
+
+            // Lưu lại người dùng với mật khẩu đã được thay đổi
             await _userRepository.UpdateUser(user);
 
             return Ok("Password has been reset successfully.");
         }
+
+
+
         private void SendEmail(string toEmail, string subject, string body)
         {
             // Đọc cấu hình email từ appsettings.json
