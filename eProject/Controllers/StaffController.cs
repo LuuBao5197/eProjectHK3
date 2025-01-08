@@ -185,5 +185,92 @@ namespace eProject.Controllers
             }
         }
 
+
+
+        [HttpGet("GetAllExhibition")]
+        public async Task<IActionResult> GetAllExhibition(int page = 1, int pageSize = 10, string? search = null)
+        {
+            var query = _dbContext.Exhibitions.AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            var totalItems = await query.CountAsync();
+            var exhibitions = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                exhibitions,
+                totalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                totalItems
+            });
+        }
+
+        [HttpGet("GetDetailExhibition/{id}")]
+        public async Task<IActionResult> GetDetailExhibition(int id)
+        {
+
+            var exhibition = _dbContext.Exhibitions
+        .FirstOrDefault(a => a.Id == id);
+            return Ok(exhibition);
+        }
+
+        [HttpPost("AddExhibition")]
+        public async Task<IActionResult> AddExhibition(Exhibition exhibition)
+        {
+            await _dbContext.Exhibitions.AddAsync(exhibition);
+            await _dbContext.SaveChangesAsync();
+            return Ok(exhibition);
+        }
+
+        [HttpPut("EditExhibition/{id}")]
+        public async Task<IActionResult> EditExhibition(int id, Exhibition exhibition)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new { message = "Data is not valid" });
+                }
+
+                if (id != exhibition.Id)
+                {
+                    return NotFound(new { message = "No result about this exhibition" });
+                }
+
+                _dbContext.Entry(exhibition).State = EntityState.Modified;
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { message = "Contest updated successfully", data = exhibition });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+
+            }
+        }
+
+        [HttpDelete("DeleteExhibition/{id}")]
+        public async Task<IActionResult> DeleteExhibition(int id)
+        {
+            try
+            {
+                var exhibition = await _dbContext.Exhibitions.FirstOrDefaultAsync(ex => ex.Id == id);
+                _dbContext.Exhibitions.Remove(exhibition);
+                await _dbContext.SaveChangesAsync();
+                return Ok(exhibition);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+
+            }
+
+        }
     }
 }
