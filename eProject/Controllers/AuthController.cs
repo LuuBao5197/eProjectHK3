@@ -191,9 +191,96 @@ namespace eProject.Controllers
             // Gửi email
             smtpClient.Send(mailMessage);
         }
+
+        [HttpPost("update-password/{id}")]
+        public async Task<IActionResult> UpdatePassword(int id, UpdatePasswordRequest request)
+        {
+            var users = await _userRepository.GetUsersAsync();
+            var user = users.FirstOrDefault(u => u.Id == id);
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            // Check if current password is correct
+            if (user.Password != request.currentPassword)
+            {
+                return BadRequest("Current password is incorrect");
+            }
+
+            // Check if new password matches the confirm new password
+            if (request.newPassword != request.confirmPassword)
+            {
+                return BadRequest("New password and confirm new password do not match");
+            }
+
+            // Update the password
+            user.Password = request.newPassword;
+
+            // Save the updated user
+            await _userRepository.UpdateUser(user);
+
+            return Ok("Password has been updated successfully.");
+        }
+
+        [HttpPost("update-email/{id}")]
+        public async Task<IActionResult> UpdateEmail(int id, UpdateEmailRequest request)
+        {
+            var users = await _userRepository.GetUsersAsync();
+            var user = users.FirstOrDefault(u => u.Id == id);
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            // Optional: You can add OTP verification here if needed, like in the existing flow.
+
+            // Check if the email is valid (basic format validation)
+            if (string.IsNullOrEmpty(request.NewEmail) || !IsValidEmail(request.NewEmail))
+            {
+                return BadRequest("Invalid email format");
+            }
+
+            // Update the email
+            user.Email = request.NewEmail;
+
+            // Save the updated user
+            await _userRepository.UpdateUser(user);
+
+            return Ok("Email has been updated successfully.");
+        }
+
+        // Helper method to validate email format
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var mailAddress = new MailAddress(email);
+                return mailAddress.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
     }
     public class TokenRequest
     {
         public string RefreshToken { get; set; }
+    }
+
+    public class UpdateEmailRequest
+    {
+        public string NewEmail { get; set; }
+    }
+
+    public class UpdatePasswordRequest
+    {
+        public string currentPassword { get; set; }
+        public string newPassword { get; set; }
+        public string confirmPassword { get; set; }
     }
 }
