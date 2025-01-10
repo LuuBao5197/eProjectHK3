@@ -17,20 +17,9 @@ namespace eProject.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllExhibitions()
+        public async Task<IActionResult> GetAllUsers()
         {
-            var exhibitions = await (from exhibition in _dbContext.Exhibitions
-                                     join user in _dbContext.Users on exhibition.OrganizedBy equals user.Id
-                                     select new
-                                     {
-                                         exhibition.Id,
-                                         exhibition.Name,
-                                         exhibition.StartDate,
-                                         exhibition.EndDate,
-                                         exhibition.Location,
-                                         OrganizedBy = user.Name // Lấy tên người tổ chức từ bảng User thay vì hiện id như thông thường
-                                     }).ToListAsync();
-
+            var exhibitions = await _dbContext.Exhibitions.ToListAsync();
             return Ok(exhibitions);
         }
 

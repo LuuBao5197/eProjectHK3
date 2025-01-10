@@ -160,7 +160,7 @@ namespace eProject.Controllers
                     }
 
                     // Update properties only if new values are provided
-                    userExisting.Username = !string.IsNullOrEmpty(UpdateuserDto.Username) ? UpdateuserDto.Username : userExisting.Username;
+                    userExisting.Name = !string.IsNullOrEmpty(UpdateuserDto.Name) ? UpdateuserDto.Name : userExisting.Name;
                     userExisting.Email = !string.IsNullOrEmpty(UpdateuserDto.Email) ? UpdateuserDto.Email : userExisting.Email;
                     userExisting.Password = !string.IsNullOrEmpty(UpdateuserDto.Password) ? UpdateuserDto.Password : userExisting.Password;
                     userExisting.Imagepath = !string.IsNullOrEmpty(UpdateuserDto.Imagepath) ? UpdateuserDto.Imagepath : userExisting.Imagepath;
