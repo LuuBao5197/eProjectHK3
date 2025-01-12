@@ -8,12 +8,12 @@ namespace eProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AddminStaffController : ControllerBase
+    public class AdminStaffController : ControllerBase
     {
         private readonly DatabaseContext _dbContext;
         private readonly EmailService _emailService;
 
-        public AddminStaffController(DatabaseContext dbContext, EmailService emailService)
+        public AdminStaffController(DatabaseContext dbContext, EmailService emailService)
         {
             _dbContext = dbContext;
             _emailService = emailService;
@@ -223,7 +223,25 @@ namespace eProject.Controllers
 
             return Ok(new { message = "Staff deleted successfully." });
         }
-        
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetStaffDetails(int id)
+        {
+            // Tìm Staff theo id và bao gồm các mối quan hệ liên quan
+            var staff = await _dbContext.Staff
+                                        .Include(s => s.User) // Bao gồm thông tin User
+                                        .Include(s => s.Classes) // Bao gồm thông tin Classes
+                                        
+                                        .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (staff == null)
+            {
+                return NotFound("Staff not found.");
+            }
+
+            // Trả về thông tin chi tiết Staff
+            return Ok(staff);
+        }
+
 
 
     }

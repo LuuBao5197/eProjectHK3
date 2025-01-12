@@ -7,13 +7,13 @@ namespace eProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AddminStudentController : ControllerBase
+    public class AdminStudentController : ControllerBase
     {
         private readonly DatabaseContext _dbContext;
 
         private readonly EmailService _emailService;
 
-        public AddminStudentController(DatabaseContext dbContext, EmailService emailService)
+        public AdminStudentController(DatabaseContext dbContext, EmailService emailService)
         {
             _dbContext = dbContext;
             _emailService = emailService;
