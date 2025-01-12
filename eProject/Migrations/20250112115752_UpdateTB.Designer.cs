@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace eProject.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250112115752_UpdateTB")]
+    partial class UpdateTB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,9 +72,6 @@ namespace eProject.Migrations
                     b.Property<int>("ContestId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsAwarded")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -114,34 +114,6 @@ namespace eProject.Migrations
                     b.ToTable("Classes");
                 });
 
-            modelBuilder.Entity("Condition", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ContestId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UpdateAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContestId");
-
-                    b.ToTable("Conditions");
-                });
-
             modelBuilder.Entity("Contest", b =>
                 {
                     b.Property<int>("Id")
@@ -160,6 +132,9 @@ namespace eProject.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -167,22 +142,15 @@ namespace eProject.Migrations
                     b.Property<int>("OrganizedBy")
                         .HasColumnType("int");
 
-                    b.Property<string>("Phase")
+                    b.Property<string>("ParticipationCriteria")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("SubmissionDeadline")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Thumbnail")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -216,19 +184,8 @@ namespace eProject.Migrations
                     b.Property<int>("OrganizedBy")
                         .HasColumnType("int");
 
-                    b.Property<string>("Phase")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("thumbnail")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -299,9 +256,6 @@ namespace eProject.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsReviewer")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime>("JoinDate")
                         .HasColumnType("datetime2");
@@ -514,9 +468,6 @@ namespace eProject.Migrations
                     b.Property<string>("Imagepath")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsFirstLogin")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime>("JoinDate")
                         .HasColumnType("datetime2");
 
@@ -591,17 +542,6 @@ namespace eProject.Migrations
                         .IsRequired();
 
                     b.Navigation("Staff");
-                });
-
-            modelBuilder.Entity("Condition", b =>
-                {
-                    b.HasOne("Contest", "Contest")
-                        .WithMany("Conditions")
-                        .HasForeignKey("ContestId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Contest");
                 });
 
             modelBuilder.Entity("Contest", b =>
@@ -808,8 +748,6 @@ namespace eProject.Migrations
                 {
                     b.Navigation("Awards");
 
-                    b.Navigation("Conditions");
-
                     b.Navigation("Submissions");
                 });
 
@@ -868,7 +806,8 @@ namespace eProject.Migrations
                 {
                     b.Navigation("Staff");
 
-                    b.Navigation("Student");
+                    b.Navigation("Student")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
