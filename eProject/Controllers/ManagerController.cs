@@ -14,6 +14,17 @@ namespace eProject.Controllers
         {
             _dbContext = dbContext;
         }
+        //Method Get All Class
+        [HttpGet("GetAllClass")]
+        public async Task<IActionResult> GetAllClass()
+        {
+            var classes = await _dbContext.Classes.ToListAsync();
+            if(classes == null || classes.Count == 0)
+            {
+                return NotFound("There's no class");
+            }
+            return Ok(classes);
+        }
 
         //Method Get All Student
         [HttpGet("GetAllStudent")]
