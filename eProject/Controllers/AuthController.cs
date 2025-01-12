@@ -44,6 +44,7 @@ namespace eProject.Controllers
             await _userRepository.UpdateUser(user);
             return Ok(new { token = tokenString, refreshToken = user.RefreshToken });
         }
+
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefrestToken(TokenRequest tokenRequest)
         {
@@ -117,7 +118,6 @@ namespace eProject.Controllers
 
             return Ok("OTP has been sent to your email.");
         }
-
 
 
         [HttpPost("verify-otp")]

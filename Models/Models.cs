@@ -205,10 +205,12 @@ public class Submission
     public string Description { get; set; }
     public string Name { get; set; }
     public string FilePath { get; set; }
+    public string? Status { get; set; }
 
     public Student? Student { get; set; }
     public Contest? Contest { get; set; }
     public Artwork? Artwork { get; set; }
+
     public ICollection<SubmissionReview>? SubmissionReviews { get; set; }
 }
 
