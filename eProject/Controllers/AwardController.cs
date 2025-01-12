@@ -25,12 +25,14 @@ namespace eProject.Controllers
                 .Include(sa => sa.Award)
                 .ThenInclude(a => a.Contest)
                 .Where(sa => new[] { "Top 1", "Top 2", "Top 3" }.Contains(sa.Award.Name)) // Lọc các giải thưởng Top 1, Top 2, Top 3
+                .OrderByDescending(sa => sa.Award.Contest.StartDate) // Giải thưởng mới nhất dựa trên ngày bắt đầu của cuộc thi
                 .Take(3) // Chỉ lấy 3 giải thưởng đầu tiên
                 .Select(sa => new
                 {
                     StudentName = sa.Student.User.Name,
                     AwardName = sa.Award.Name,
-                    ContestName = sa.Award.Contest.Name
+                    ContestName = sa.Award.Contest.Name,
+                    ContestStartDate = sa.Award.Contest.StartDate // Thêm ngày bắt đầu của cuộc thi nếu cần
                 })
                 .ToList();
 
