@@ -13,6 +13,7 @@ public class User
     public string Email { get; set; }
     public string Phone { get; set; }
     public bool Status { get; set; }
+    public bool IsFirstLogin { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime Expired { get; set; }
     public string? RefreshToken { get; set; }
@@ -20,7 +21,7 @@ public class User
     public string? OTP { get; set; } // Lưu mã OTP
     public DateTime? OTPExpired { get; set; } // Lưu thời gian hết hạn của OTP
     public string? Imagepath { get; set; }
-    public Student Student { get; set; }
+    public Student? Student { get; set; }
     public Staff? Staff { get; set; }
 
 
@@ -111,7 +112,7 @@ public class Staff
     public int Id { get; set; }
     public int UserId { get; set; }
     public DateTime JoinDate { get; set; }
-
+    public bool IsReviewer { get; set; }
     public User User { get; set; }
     public ICollection<Class>? Classes { get; set; }
     public ICollection<StaffSubject>? StaffSubjects { get; set; }
@@ -185,15 +186,20 @@ public class Contest
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public DateTime SubmissionDeadline { get; set; }
-    public string ParticipationCriteria { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public int OrganizedBy { get; set; }
-    public bool IsActive { get; set; }
+    // trang thai duyet cua cuoc thi
+    public string Status { get; set; } = "Pending Approval by Teacher";
+    //trang thai tien trinh 
+    public string Phase { get; set; } = "Upcoming";
+    // UpComing, OnGoing, Completed
 
+    public string? Thumbnail { get; set; }
     public Staff? Organizer { get; set; }
     public ICollection<Award>? Awards { get; set; }
     public ICollection<Submission>? Submissions { get; set; }
+    public ICollection<Condition>? Conditions {  get; set; } 
 }
 
 public class Submission
@@ -222,6 +228,7 @@ public class Artwork
     public string? Status { get; set; }
     public float SellingPrice { get; set; }
     public string? PaymentStatus { get; set; }
+    
     public DateTime ExhibitionDate { get; set; }
 
     public Submission? Submission { get; set; }
@@ -249,6 +256,16 @@ public class Exhibition
     public DateTime EndDate { get; set; }
     public string Location { get; set; }
     public int OrganizedBy { get; set; }
+    public string? thumbnail {  get; set; }
+
+    //trang thai duyet cua trien lam
+    public string status { get; set; } = "Pending Approval by Teacher";
+
+    //trang thai tien trinh 
+    public string Phase { get; set; } = "Upcoming";
+    // UpComing, OnGoing, Completed
+
+
 
     public Staff? Organizer { get; set; }
     public ICollection<ExhibitionArtwork>? ExhibitionArtworks { get; set; }
@@ -271,6 +288,7 @@ public class Award
     public int Value { get; set; }
     public int ContestId { get; set; }
     public int AwardQuantity { get; set; }
+    public bool IsAwarded { get; set; }
 
     public Contest? Contest { get; set; }
     public ICollection<StudentAward>? StudentAwards { get; set; }
@@ -291,4 +309,17 @@ public class RatingLevel
     public string Name { get; set; }
     public int Mark { get; set; }
     public ICollection<SubmissionReview>? SubmissionReviews { get; set; }
+}
+
+public class Condition
+{
+    public int Id { get; set; }
+
+    public int ContestId { get; set; }
+    public string Description { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime UpdateAt {  get; set; } = DateTime.Now;
+
+    public Contest? Contest { get; set; }
 }

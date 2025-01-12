@@ -14,6 +14,57 @@ namespace eProject.Controllers
         {
             _dbContext = dbContext;
         }
+        //Method Get All Class
+        [HttpGet("GetAllClass")]
+        public async Task<IActionResult> GetAllClass()
+        {
+            var classes = await _dbContext.Classes.ToListAsync();
+            if (classes == null || classes.Count == 0)
+            {
+                return NotFound("There's no class");
+            }
+            return Ok(classes);
+        }
+
+        [HttpGet("GetStudentByClass/{classId}")]
+        public async Task<IActionResult> GetStudentByClass(int classId)
+        {
+            var classWithDetails = await _dbContext.Classes
+                .Include(c => c.StudentClasses)
+                    .ThenInclude(sc => sc.Student)
+                .Include(c => c.Staff) 
+                    .ThenInclude(s => s.User) 
+                .FirstOrDefaultAsync(c => c.Id == classId);
+
+            if (classWithDetails == null)
+            {
+                return NotFound("Class not found");
+            }
+
+            var students = classWithDetails.StudentClasses
+                .Where(sc => sc.ClassId == classId)
+                .Select(sc => sc.Student)
+                .ToList();
+
+            if (!students.Any())
+            {
+                return NotFound("No students found in this class");
+            }
+
+            var teacherName = classWithDetails.Staff?.User?.Name ?? "No teacher assigned";
+
+            var result = new
+            {
+                ClassName = classWithDetails.Name,
+                SchoolYear = classWithDetails.Year,
+                TeacherName = teacherName,
+                Students = students
+            };
+
+            return Ok(result);
+        }
+
+
 
         //Method Get All Student
         [HttpGet("GetAllStudent")]
