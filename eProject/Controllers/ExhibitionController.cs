@@ -17,11 +17,25 @@ namespace eProject.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers()
+        public async Task<IActionResult> GetAllExhibitions()
         {
-            var exhibitions = await _dbContext.Exhibitions.ToListAsync();
+            var exhibitions = await _dbContext.Exhibitions
+                .Include(e => e.Organizer) // Tải kèm thông tin người tổ chức
+                .ThenInclude(s => s.User) // Tải kèm thông tin User của người tổ chức
+                .Select(e => new
+                {
+                    e.Id,
+                    e.Name,
+                    e.StartDate,
+                    e.EndDate,
+                    e.Location,
+                    OrganizerName = e.Organizer != null && e.Organizer.User != null ? e.Organizer.User.Name : null // Lấy tên người tổ chức
+                })
+                .ToListAsync();
+
             return Ok(exhibitions);
         }
+
 
 
         [HttpGet("{id}")]
