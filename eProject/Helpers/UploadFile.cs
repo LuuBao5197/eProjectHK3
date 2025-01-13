@@ -21,11 +21,14 @@
         }
         public static void DeleteImage(string urlImage)
         {
+
             var exactPath = urlImage.Substring(rootUrl.Length);
+
             if (File.Exists(exactPath))
             {
                 File.Delete(exactPath);
             }
+
         }
-    };
+    }
 }

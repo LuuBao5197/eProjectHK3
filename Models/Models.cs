@@ -112,6 +112,8 @@ public class Staff
     public int Id { get; set; }
     public int UserId { get; set; }
     public DateTime JoinDate { get; set; }
+
+    // Có phải la nguoi kiem duyet khong 
     public bool IsReviewer { get; set; }
     public User User { get; set; }
     public ICollection<Class>? Classes { get; set; }
@@ -137,6 +139,7 @@ public class StaffQualification
     public int QualificationId { get; set; }
 
     public Staff? Staff { get; set; }
+
     public Qualification? Qualification { get; set; }
 }
 
@@ -190,7 +193,7 @@ public class Contest
     public DateTime UpdatedAt { get; set; }
     public int OrganizedBy { get; set; }
     // trang thai duyet cua cuoc thi
-    public string Status { get; set; } = "Pending Approval by Teacher";
+    public string Status { get; set; } = "Pending";
     //trang thai tien trinh 
     public string Phase { get; set; } = "Upcoming";
     // UpComing, OnGoing, Completed
@@ -259,7 +262,7 @@ public class Exhibition
     public string? thumbnail {  get; set; }
 
     //trang thai duyet cua trien lam
-    public string status { get; set; } = "Pending Approval by Teacher";
+    public string status { get; set; } = "Pending";
 
     //trang thai tien trinh 
     public string Phase { get; set; } = "Upcoming";

@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Uploads\contestThumbnail\" />
     <Folder Include="Uploads\UserAvatar\" />
   </ItemGroup>
 
