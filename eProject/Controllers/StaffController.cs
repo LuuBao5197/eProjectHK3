@@ -347,5 +347,53 @@ namespace eProject.Controllers
             }
 
         }
+
+        [HttpGet("GetSubmissionByContest/{id}")]
+        public async Task<IActionResult> GetSubmissionByContest(int id, int page = 1, int pageSize = 10, string? search = null)
+        {
+          /*  var submissions = await _dbContext.Submissions.FirstOrDefaultAsync(s => s.ContestId == id);*/
+            var query = _dbContext.Submissions.Where(c=>c.ContestId == id).AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            var totalItems = await query.CountAsync();
+            var submissions = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                submissions,
+                totalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                totalItems
+            });
+        }
+
+        [HttpGet("GetRatingLevel")]
+        public async Task<IActionResult> GetRatingLevel()
+        {
+            var ratingLevels = await _dbContext.RatingLevels.ToListAsync();
+            return Ok(ratingLevels);
+        }
+
+        [HttpPost("AddSubmissionReview")]
+        public async Task<IActionResult> ReviewSubmission(SubmissionReview submissionReview)
+        {
+            try
+            {
+                if (!ModelState.IsValid) return BadRequest("Data is not valid");
+                await _dbContext.SubmissionReviews.AddAsync(submissionReview);
+                await _dbContext.SaveChangesAsync();
+                return Created("Add review for submission successfully", submissionReview);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,"Error network");
+            }
+        }
     }
 }
