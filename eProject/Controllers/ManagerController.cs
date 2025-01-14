@@ -81,13 +81,22 @@ namespace eProject.Controllers
         [HttpGet("GetStudentDetail/{id}")]
         public async Task<IActionResult> GetStudentDetail(int id)
         {
-            var student = await _dbContext.Students.FindAsync(id);
+            var student = await _dbContext.Students
+                .Include(s => s.Submissions) // Lấy tất cả Submissions của học sinh
+                .ThenInclude(sub => sub.SubmissionReviews) // Lấy tất cả SubmissionReviews của từng Submission
+                .ThenInclude(review => review.Staff) // Lấy thông tin Staff cho mỗi SubmissionReview
+                .Include(s => s.User) // Lấy thông tin User của học sinh
+                .FirstOrDefaultAsync(s => s.Id == id); // Tìm học sinh theo ID
+
             if (student == null)
             {
                 return NotFound("Can't Find This Student");
             }
+
             return Ok(student);
         }
+
+
 
         //Method Get All Contest 
         [HttpGet("GetAllContest")]
