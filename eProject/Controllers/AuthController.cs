@@ -9,6 +9,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity.Data;
+using Newtonsoft.Json.Linq;
 
 namespace eProject.Controllers
 {
@@ -42,6 +43,13 @@ namespace eProject.Controllers
             user.RefreshToken = Guid.NewGuid().ToString();
             user.RefreshTokenExpired = DateTime.UtcNow.AddDays(7);
             await _userRepository.UpdateUser(user);
+        /*    Response.Cookies.Append("authToken", tokenString, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,  // Đảm bảo chỉ gửi qua HTTPS
+                SameSite = SameSiteMode.Strict, // Chính sách bảo mật SameSite
+                Expires = DateTime.UtcNow.AddDays(7) // Token hết hạn sau 7 ngày
+            });*/
             return Ok(new { token = tokenString, refreshToken = user.RefreshToken });
         }
 
@@ -59,10 +67,14 @@ namespace eProject.Controllers
             {
                 return Unauthorized();
             }
+            // Gửi JWT token vào cookie với thuộc tính HttpOnly và Secure
+           
             var tokenString = GenerateToken(user);
             user.RefreshToken = Guid.NewGuid().ToString();
             user.RefreshTokenExpired = DateTime.UtcNow.AddDays(7);
             await _userRepository.UpdateUser(user);
+
+          
             return Ok(new { token = tokenString, refreshToken = user.RefreshToken });
         }
 

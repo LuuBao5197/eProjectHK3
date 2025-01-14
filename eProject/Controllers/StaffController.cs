@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MUSICAPI.Helpers;
 using System;
+using System.Net.WebSockets;
 
 namespace eProject.Controllers
 {
@@ -382,7 +383,7 @@ namespace eProject.Controllers
 
         [HttpPost("AddSubmissionReview")]
         public async Task<IActionResult> ReviewSubmission(SubmissionReview submissionReview)
-        {
+        {   
             try
             {
                 if (!ModelState.IsValid) return BadRequest("Data is not valid");
@@ -394,6 +395,14 @@ namespace eProject.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,"Error network");
             }
+        }
+
+        [HttpGet("GetInfoStaff/{id}")]
+        public async Task<IActionResult> GetStaffFromUserId(int id)
+        {
+            var staff = await _dbContext.Staff.FirstOrDefaultAsync(s => s.UserId == id);
+            if (staff == null) return BadRequest("Not fount any Staff ");
+            return Ok(staff);
         }
     }
 }
