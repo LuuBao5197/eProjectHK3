@@ -29,6 +29,7 @@ namespace eProject.Controllers
                     e.StartDate,
                     e.EndDate,
                     e.Location,
+                    e.thumbnail,
                     OrganizerName = e.Organizer != null && e.Organizer.User != null ? e.Organizer.User.Name : null // Lấy tên người tổ chức
                 })
                 .ToListAsync();
