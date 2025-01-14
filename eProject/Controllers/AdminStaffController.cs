@@ -43,7 +43,7 @@ namespace eProject.Controllers
                 Expired = DateTime.MaxValue,
             };
 
-            // Lưu User vào cơ sở dữ liệu
+            // Lưu User vào cơ sở dữ liệuv
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
@@ -52,11 +52,9 @@ namespace eProject.Controllers
             {
                 UserId = user.Id, // Gán UserId đã tạo cho Staff
                 JoinDate = request.JoinDate,
-                Classes = request.ClassIds?.Select(classId => new Class { Id = classId }).ToList(),
+                //Classes = request.ClassIds?.Select(classId => new Class { Id = classId }).ToList(),
                 StaffSubjects = request.StaffSubjectIds?.Select(subjectId => new StaffSubject { SubjectId = subjectId }).ToList(),
                 StaffQualifications = request.StaffQualificationIds?.Select(qualificationId => new StaffQualification { QualificationId = qualificationId }).ToList(),
-                OrganizedContests = request.ContestIds?.Select(contestId => new Contest { Id = contestId }).ToList(),
-                OrganizedExhibitions = request.ExhibitionIds?.Select(exhibitionId => new Exhibition { Id = exhibitionId }).ToList(),
             };
 
             // Lưu Staff vào cơ sở dữ liệu
@@ -92,9 +90,7 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetAllStaff()
         {
             // Lấy tất cả nhân viên có role là "staff" từ cơ sở dữ liệu
-            var staffList = await _dbContext.Users
-                                            .Where(u => u.Role == "staff")  // Lọc theo Role "staff"
-                                            .Include(u => u.Staff)  // Lấy thông tin Staff kèm theo User
+            var staffList = await _dbContext.Staff.Include(s => s.User)
                                             .ToListAsync();
 
             if (staffList == null || staffList.Count == 0)
@@ -241,6 +237,7 @@ namespace eProject.Controllers
             // Trả về thông tin chi tiết Staff
             return Ok(staff);
         }
+        
 
 
 

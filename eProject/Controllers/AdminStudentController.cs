@@ -215,15 +215,30 @@ namespace eProject.Controllers
             }
         }
 
+        [HttpGet("classes")]
+        public async Task<IActionResult> GetClasses()
+        {
+            try
+            {
+                var classes = await _dbContext.Classes.ToListAsync();
+
+                return Ok(classes);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error fetching classes: {ex.Message}");
+            }
+        }
 
 
         // Lấy tất cả Student
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllStudents()
         {
-            var students = await _dbContext.Users
-                                            .Where(u => u.Role == "student")
-                                            .Include(u => u.Student)  // Lấy thông tin Staff kèm theo User
+            var students = await _dbContext.Students
+                                            .Include(s=>s.User)
+                                            .Include(s => s.StudentClasses)
+                                    .ThenInclude(sc => sc.Class)
                                             .ToListAsync();
 
             if (students == null || students.Count == 0)
@@ -323,25 +338,24 @@ namespace eProject.Controllers
 
             return Ok(new { message = "Student deleted successfully." });
         }
-        // Lấy thông tin Student theo ID
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetStudentById(int id)
+        public async Task<IActionResult> GetStudentDetails(int id)
         {
             var student = await _dbContext.Students
                                           .Include(s => s.User)
+                                          .Include(s => s.Submissions) // Bao gồm danh sách các bài nộp
+                                           .Include(s => s.StudentAwards) // Bao gồm danh sách giải thưởng
                                           .Include(s => s.StudentClasses)
-                                          .Include(s => s.Submissions)
-                                          .Include(s => s.StudentAwards)
+                                          .ThenInclude(sc => sc.Class)
                                           .FirstOrDefaultAsync(s => s.Id == id);
 
-            if (student == null)
-            {
-                return NotFound("Student not found.");
-            }
-
-            return Ok(student);
+            return student == null
+                ? NotFound("Student not found.")
+                : Ok(student);
         }
-        //Tìm kiếm Student theo tên
+
+        // Lấy thông tin Student theo ID
+
         [HttpGet("search")]
         public async Task<IActionResult> SearchStudentsByName(string name)
         {

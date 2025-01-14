@@ -1,6 +1,9 @@
 ﻿ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MUSICAPI.Helpers;
+using System;
+using System.Net.WebSockets;
 
 namespace eProject.Controllers
 {
@@ -9,7 +12,8 @@ namespace eProject.Controllers
     public class StaffController : ControllerBase
     {
         private readonly DatabaseContext _dbContext;
-        
+        private readonly string contestFolder = "contestThumbnail";
+        private readonly string exhibitionFolder = "exhibitionThumbnail";
         public StaffController(DatabaseContext dbContext)
         {
             _dbContext = dbContext;
@@ -61,15 +65,7 @@ namespace eProject.Controllers
         }
 
         [HttpPost("AddContest")]
-        public async Task<IActionResult> AddContest(Contest contest)
-        {
-            await _dbContext.Contests.AddAsync(contest);
-            await _dbContext.SaveChangesAsync();
-            return Ok(contest);
-        }
-
-        [HttpPut("EditContest/{id}")]
-        public async Task<IActionResult> EditContest(int id, Contest contest)
+        public async Task<IActionResult> AddContest([FromForm] Contest contest, IFormFile? file)
         {
             try
             {
@@ -77,15 +73,60 @@ namespace eProject.Controllers
                 {
                     return BadRequest(new { message = "Data is not valid" });
                 }
+                var contestCheck = await _dbContext.Contests.FirstOrDefaultAsync(c=>c.Name == contest.Name);
+                if (contestCheck != null)
+                {
+                    return BadRequest(new { message = "NameContest must be not duplicate" });
+                }
+                var thumbnail = "http://localhost:5190/Uploads/DefaultSystem/DefaultContestThumbnail.jpg";
+                if (file != null) {
+                    thumbnail = await UploadFile.SaveImage(contestFolder, file);
+                }
+                contest.Thumbnail = thumbnail;
+              
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Add Contest Defailed");
+            }
+            await _dbContext.Contests.AddAsync(contest);
+            await _dbContext.SaveChangesAsync();
+            return Created("Success", contest);
+        }
 
-                if(id != contest.Id)
+        [HttpPut("EditContest/{id}")]
+        public async Task<IActionResult> EditContest(int id,[FromForm] Contest contest, IFormFile? file)
+        {
+            try
+            {
+                if (id != contest.Id)
                 {
                     return NotFound(new { message = "No result about this contest" });
                 }
                 
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new { message = "Data is not valid" });
+                }
+                var contestCheck = await _dbContext.Contests.FirstOrDefaultAsync(c => c.Name == contest.Name && c.Id != contest.Id);
+                if (contestCheck != null)
+                {
+                    return BadRequest(new { message = "NameContest must be not duplicate" });
+                }
+
+               
+                var oldThumbnail = contest.Thumbnail;
+                if (file != null)
+                {
+                    contest.Thumbnail = await UploadFile.SaveImage(contestFolder, file);
+                }
+
                 _dbContext.Entry(contest).State = EntityState.Modified;
                 await _dbContext.SaveChangesAsync();
-
+                if (!string.IsNullOrEmpty(oldThumbnail) && oldThumbnail != "http://localhost:5190/Uploads/DefaultSystem/DefaultContestThumbnail.jpg")
+                {
+                    UploadFile.DeleteImage(oldThumbnail);
+                }
                 return Ok(new { message = "Contest updated successfully", data = contest });
             }
             catch (Exception ex)
@@ -221,15 +262,7 @@ namespace eProject.Controllers
         }
 
         [HttpPost("AddExhibition")]
-        public async Task<IActionResult> AddExhibition(Exhibition exhibition)
-        {
-            await _dbContext.Exhibitions.AddAsync(exhibition);
-            await _dbContext.SaveChangesAsync();
-            return Ok(exhibition);
-        }
-
-        [HttpPut("EditExhibition/{id}")]
-        public async Task<IActionResult> EditExhibition(int id, Exhibition exhibition)
+        public async Task<IActionResult> AddExhibition([FromForm] Exhibition exhibition, IFormFile? image)
         {
             try
             {
@@ -237,21 +270,64 @@ namespace eProject.Controllers
                 {
                     return BadRequest(new { message = "Data is not valid" });
                 }
+                var exhibitionCheck = await _dbContext.Contests.FirstOrDefaultAsync(c => c.Name == exhibition.Name);
+                if (exhibitionCheck != null)
+                {
+                    return BadRequest(new { message = "Name Exhibition must be not duplicate" });
+                }
+                var thumbnail = "http://localhost:5190/Uploads/DefaultSystem/ExhibitionDefaultThumbnail.jpg";
+                if (image != null)
+                {
+                    thumbnail = await UploadFile.SaveImage(exhibitionFolder, image);
+                }
+                exhibition.thumbnail = thumbnail;
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Add Contest Defailed");
+            }
+            await _dbContext.Exhibitions.AddAsync(exhibition);
+            await _dbContext.SaveChangesAsync();
+            return Ok(exhibition);
+        }
 
+        [HttpPut("EditExhibition/{id}")]
+        public async Task<IActionResult> EditExhibition(int id,[FromForm] Exhibition exhibition, IFormFile? image)
+        {
+            try
+            {
                 if (id != exhibition.Id)
                 {
                     return NotFound(new { message = "No result about this exhibition" });
                 }
-
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new { message = "Data is not valid" });
+                }
+                var exhibitionCheck = await _dbContext.Contests.FirstOrDefaultAsync(c => c.Name == exhibition.Name && c.Id != exhibition.Id);
+                if (exhibitionCheck != null)
+                {
+                    return BadRequest(new { message = "Name Exhibition must be not duplicate" });
+                }
+                var oldThumbnail = exhibition.thumbnail;
+                if (image != null)
+                {
+                    exhibition.thumbnail = await UploadFile.SaveImage(exhibitionFolder, image);
+                    if (!string.IsNullOrEmpty(oldThumbnail) && oldThumbnail != "http://localhost:5190/Uploads/DefaultSystem/ExhibitionDefaultThumbnail.jpg")
+                    {
+                        UploadFile.DeleteImage(oldThumbnail);
+                    }
+                   
+                }
+               
                 _dbContext.Entry(exhibition).State = EntityState.Modified;
                 await _dbContext.SaveChangesAsync();
 
-                return Ok(new { message = "Contest updated successfully", data = exhibition });
+                return Ok(new { message = "Exhibition updated successfully", data = exhibition });
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
-
             }
         }
 
@@ -271,6 +347,62 @@ namespace eProject.Controllers
 
             }
 
+        }
+
+        [HttpGet("GetSubmissionByContest/{id}")]
+        public async Task<IActionResult> GetSubmissionByContest(int id, int page = 1, int pageSize = 10, string? search = null)
+        {
+          /*  var submissions = await _dbContext.Submissions.FirstOrDefaultAsync(s => s.ContestId == id);*/
+            var query = _dbContext.Submissions.Where(c=>c.ContestId == id).AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            var totalItems = await query.CountAsync();
+            var submissions = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                submissions,
+                totalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                totalItems
+            });
+        }
+
+        [HttpGet("GetRatingLevel")]
+        public async Task<IActionResult> GetRatingLevel()
+        {
+            var ratingLevels = await _dbContext.RatingLevels.ToListAsync();
+            return Ok(ratingLevels);
+        }
+
+        [HttpPost("AddSubmissionReview")]
+        public async Task<IActionResult> ReviewSubmission(SubmissionReview submissionReview)
+        {   
+            try
+            {
+                if (!ModelState.IsValid) return BadRequest("Data is not valid");
+                await _dbContext.SubmissionReviews.AddAsync(submissionReview);
+                await _dbContext.SaveChangesAsync();
+                return Created("Add review for submission successfully", submissionReview);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,"Error network");
+            }
+        }
+
+        [HttpGet("GetInfoStaff/{id}")]
+        public async Task<IActionResult> GetStaffFromUserId(int id)
+        {
+            var staff = await _dbContext.Staff.FirstOrDefaultAsync(s => s.UserId == id);
+            if (staff == null) return BadRequest("Not fount any Staff ");
+            return Ok(staff);
         }
     }
 }
