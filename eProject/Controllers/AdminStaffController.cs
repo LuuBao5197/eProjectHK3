@@ -85,6 +85,21 @@ namespace eProject.Controllers
             return Ok(new { message = "Staff created successfully and email sent.", staff = staff });
         }
 
+        [HttpGet("subjects")]
+        public async Task<IActionResult> GetSubjects()
+        {
+            var subjects = await _dbContext.Subjects.ToListAsync();
+
+            return Ok(subjects);
+        }
+        [HttpGet("qualifications")]
+        public async Task<IActionResult> GetQualifications()
+        {
+            var qualifications = await _dbContext.Qualifications.ToListAsync();
+
+            return Ok(qualifications);
+        }
+
 
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllStaff()
