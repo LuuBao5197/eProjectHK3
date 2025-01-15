@@ -34,7 +34,8 @@ namespace eProject.Controllers
 
 
         [HttpGet("GetAllContest")]
-        public async Task<IActionResult> GetAllContest(int page = 1, int pageSize = 10, string? search = null)
+        public async Task<IActionResult> GetAllContest(int page = 1, int pageSize = 10, string? search = null, 
+            int? staffId = -1, string? status = null, string? phase = null)
         {
             var query = _dbContext.Contests.AsQueryable();
 
@@ -42,7 +43,19 @@ namespace eProject.Controllers
             {
                 query = query.Where(c => c.Name.Contains(search));
             }
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(c => c.Status.ToLower().Equals(status.ToLower()));
+            }
 
+            if (!string.IsNullOrEmpty(phase))
+            {
+                query = query.Where(c => c.Phase.ToLower().Equals(phase.ToLower()));
+            }
+            if (staffId != -1)
+            {
+                query = query.Where(c => c.OrganizedBy == staffId);
+            }
             var totalItems = await query.CountAsync();
             var contests = await query
                 .Skip((page - 1) * pageSize)
@@ -373,6 +386,101 @@ namespace eProject.Controllers
                 totalItems
             });
         }
+        [HttpGet("GetSubmissionHasReviewByContest/{id}")]
+        public async Task<IActionResult> GetSubmissionHasReviewByContest(int id, int page = 1, int pageSize = 10, string? search = null, int staffId = -1)
+        {
+            var query = _dbContext.Submissions
+                .Where(c => c.ContestId == id)
+                .Include(s => s.SubmissionReviews) // Include để lấy review
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            if (staffId != -1)
+            {
+                // Lọc các submissions có ít nhất một review với staffId phù hợp
+                query = query.Where(c => c.SubmissionReviews.Any(r => r.StaffId == staffId));
+            }
+
+            var totalItems = await query.CountAsync();
+            var submissions = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(s => new
+                {
+                    SubmissionId = s.Id,
+                    SubmissionName = s.Name,
+                    Reviews = s.SubmissionReviews.Select(r => new
+                    {
+                        r.SubmissionId,
+                        r.StaffId,
+                        r.ReviewText,
+                        r.ReviewDate
+                    }).ToList(),
+                    SubmissionDescription = s.Description
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                submissions,
+                totalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                totalItems
+            });
+        }
+
+        [HttpGet("GetSubmissionNotReviewByContest/{id}")]
+        public async Task<IActionResult> GetSubmissionNotReviewByContest(int id, int page = 1, int pageSize = 10, string? search = null, int staffId = -1)
+        {
+            var query = _dbContext.Submissions
+                .Where(c => c.ContestId == id)
+                .Include(s => s.SubmissionReviews) // Include để lấy reviews
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            if (staffId != -1)
+            {
+                // Lọc các submissions mà staff chưa thực hiện review
+                query = query.Where(c => !c.SubmissionReviews.Any(r => r.StaffId == staffId));
+            }
+
+            var totalItems = await query.CountAsync();
+            var submissions = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(s => new
+                {
+                    SubmissionId = s.Id,
+                    SubmissionName = s.Name,
+                    SubmissionDescription = s.Description,
+                    SubmissionDate = s.SubmissionDate,
+                    Reviews = s.SubmissionReviews.Select(r => new
+                    {
+                        r.SubmissionId,
+                        r.StaffId,
+                        r.ReviewText,
+                        r.ReviewDate
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                submissions,
+                totalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                totalItems
+            });
+        }
+
+
+
 
         [HttpGet("GetRatingLevel")]
         public async Task<IActionResult> GetRatingLevel()
