@@ -32,8 +32,8 @@ namespace eProject.Controllers
             var classWithDetails = await _dbContext.Classes
                 .Include(c => c.StudentClasses)
                     .ThenInclude(sc => sc.Student)
-                .Include(c => c.Staff) 
-                    .ThenInclude(s => s.User) 
+                .Include(c => c.Staff)
+                    .ThenInclude(s => s.User)
                 .FirstOrDefaultAsync(c => c.Id == classId);
 
             if (classWithDetails == null)
@@ -174,9 +174,8 @@ namespace eProject.Controllers
             }
             return Ok(exhibitions);
         }
-
-        [HttpGet("GetExhibitionDetail/{id}")]
         //Method Get exhibition by id
+        [HttpGet("GetExhibitionDetail/{id}")]
         public async Task<IActionResult> GetExhibitionDetail(int id)
         {
             var exhibition = await _dbContext.Exhibitions.FindAsync(id);
@@ -186,5 +185,66 @@ namespace eProject.Controllers
             }
             return Ok(exhibition);
         }
+        /*//Method Get Teacher Detail
+        [HttpGet("GetTeacherDetail/{id}")]
+        public async Task<IActionResult> GetTeacherDetail(int id)
+        {
+            var staff = await _dbContext.Staff
+                                        .Include(s => s.User)  // Include User information
+                                        .Include(s => s.Classes)  // Include the Classes assigned to the teacher
+                                        .Include(s => s.StaffSubjects)  // Include subjects the staff teaches
+                                        .Include(s => s.StaffQualifications)  // Include qualifications of the staff
+                                        .Include(s => s.OrganizedContests)  // Include contests organized by the teacher
+                                        .Include(s => s.OrganizedExhibitions)  // Include exhibitions organized by the teacher
+                                        .Include(s => s.SubmissionReviews)  // Include submission reviews by the teacher
+                                        .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (staff == null)
+            {
+                return NotFound("Staff not found.");
+            }
+
+            // Create the response object that matches what the frontend expects
+            var response = new
+            {
+                teacherId = staff.Id,
+                teacherName = staff.User?.Name,
+                teacherEmail = staff.User?.Email,
+                teacherPhone = staff.User?.Phone,
+                joinDate = staff.JoinDate.ToString("yyyy-MM-dd"),
+                isReviewer = staff.IsReviewer,
+                classes = staff.Classes.Select(c => new
+                {
+                    classId = c.Id,
+                    className = c.Name,
+                    schoolYear = c.Year,
+                    totalStudents = c.StudentClasses.Count
+                }).ToList(),
+                staffSubjects = staff.StaffSubjects.Select(ss => new
+                {
+                    ss.Subject.Name  // Assuming there is a 'Name' property in the Subject model
+                }).ToList(),
+                staffQualifications = staff.StaffQualifications.Select(sq => new
+                {
+                    qualification = sq.Qualification  // Assuming there's a 'QualificationName' field
+                }).ToList(),
+                organizedContests = staff.OrganizedContests.Select(c => new
+                {
+                    c.Name,
+                }).ToList(),
+                organizedExhibitions = staff.OrganizedExhibitions.Select(e => new
+                {
+                    e.Name,
+                }).ToList(),
+                submissionReviews = staff.SubmissionReviews.Select(sr => new
+                {
+                    reviewText = sr.ReviewText,
+                    ratingLevel = sr.RatingLevel, // Assuming 'RatingLevel' is a string or enum
+                    reviewDate = sr.ReviewDate.ToString("yyyy-MM-dd")
+                }).ToList()
+            };
+
+            return Ok(response);
+        }*/
     }
 }
