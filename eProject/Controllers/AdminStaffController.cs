@@ -8,12 +8,12 @@ namespace eProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AddminStaffController : ControllerBase
+    public class AdminStaffController : ControllerBase
     {
         private readonly DatabaseContext _dbContext;
         private readonly EmailService _emailService;
 
-        public AddminStaffController(DatabaseContext dbContext, EmailService emailService)
+        public AdminStaffController(DatabaseContext dbContext, EmailService emailService)
         {
             _dbContext = dbContext;
             _emailService = emailService;
@@ -43,7 +43,7 @@ namespace eProject.Controllers
                 Expired = DateTime.MaxValue,
             };
 
-            // Lưu User vào cơ sở dữ liệu
+            // Lưu User vào cơ sở dữ liệuv
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
@@ -52,11 +52,9 @@ namespace eProject.Controllers
             {
                 UserId = user.Id, // Gán UserId đã tạo cho Staff
                 JoinDate = request.JoinDate,
-                Classes = request.ClassIds?.Select(classId => new Class { Id = classId }).ToList(),
+                //Classes = request.ClassIds?.Select(classId => new Class { Id = classId }).ToList(),
                 StaffSubjects = request.StaffSubjectIds?.Select(subjectId => new StaffSubject { SubjectId = subjectId }).ToList(),
                 StaffQualifications = request.StaffQualificationIds?.Select(qualificationId => new StaffQualification { QualificationId = qualificationId }).ToList(),
-                OrganizedContests = request.ContestIds?.Select(contestId => new Contest { Id = contestId }).ToList(),
-                OrganizedExhibitions = request.ExhibitionIds?.Select(exhibitionId => new Exhibition { Id = exhibitionId }).ToList(),
             };
 
             // Lưu Staff vào cơ sở dữ liệu
@@ -87,14 +85,27 @@ namespace eProject.Controllers
             return Ok(new { message = "Staff created successfully and email sent.", staff = staff });
         }
 
+        [HttpGet("subjects")]
+        public async Task<IActionResult> GetSubjects()
+        {
+            var subjects = await _dbContext.Subjects.ToListAsync();
+
+            return Ok(subjects);
+        }
+        [HttpGet("qualifications")]
+        public async Task<IActionResult> GetQualifications()
+        {
+            var qualifications = await _dbContext.Qualifications.ToListAsync();
+
+            return Ok(qualifications);
+        }
+
 
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllStaff()
         {
             // Lấy tất cả nhân viên có role là "staff" từ cơ sở dữ liệu
-            var staffList = await _dbContext.Users
-                                            .Where(u => u.Role == "staff")  // Lọc theo Role "staff"
-                                            .Include(u => u.Staff)  // Lấy thông tin Staff kèm theo User
+            var staffList = await _dbContext.Staff.Include(s => s.User)
                                             .ToListAsync();
 
             if (staffList == null || staffList.Count == 0)
@@ -223,7 +234,26 @@ namespace eProject.Controllers
 
             return Ok(new { message = "Staff deleted successfully." });
         }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetStaffDetails(int id)
+        {
+            // Tìm Staff theo id và bao gồm các mối quan hệ liên quan
+            var staff = await _dbContext.Staff
+                                        .Include(s => s.User) // Bao gồm thông tin User
+                                        .Include(s => s.Classes) // Bao gồm thông tin Classes
+                                        
+                                        .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (staff == null)
+            {
+                return NotFound("Staff not found.");
+            }
+
+            // Trả về thông tin chi tiết Staff
+            return Ok(staff);
+        }
         
+
 
 
     }
