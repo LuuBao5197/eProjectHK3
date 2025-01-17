@@ -32,7 +32,8 @@ namespace eProject.Controllers
                                                c.CreatedAt,
                                                c.UpdatedAt,
                                                OrganizerName = c.Organizer != null && c.Organizer.User != null ? c.Organizer.User.Name : null, // Get organizer's name
-                                               c.Status
+                                               c.Status,
+                                               c.Thumbnail
                                            })
                                            .ToListAsync();
 
