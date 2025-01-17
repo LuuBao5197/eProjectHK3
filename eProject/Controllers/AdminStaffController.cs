@@ -32,7 +32,7 @@ namespace eProject.Controllers
             var user = new User
             {
                 Username = request.Username,
-                Password = request.Password, // Bạn có thể mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
+                Password = request.Password, 
                 Role = "staff", // Gán role là staff
                 Name = request.Name,
                 Email = request.Email,
