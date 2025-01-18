@@ -82,11 +82,11 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetStudentDetail(int id)
         {
             var student = await _dbContext.Students
-                .Include(s => s.Submissions) 
-                .ThenInclude(sub => sub.SubmissionReviews) 
-                .ThenInclude(review => review.Staff) 
-                .Include(s => s.User) 
-                .FirstOrDefaultAsync(s => s.Id == id); 
+                .Include(s => s.Submissions)
+                .ThenInclude(sub => sub.SubmissionReviews)
+                .ThenInclude(review => review.Staff)
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.Id == id);
 
             if (student == null)
             {
@@ -134,7 +134,6 @@ namespace eProject.Controllers
             return Ok(awards);
         }
 
-        //[HttpGet("GetAwardDetail/{id}")]
         //Method Get Detail of the prizes that have been awarded By Id
         [HttpGet("GetAwardDetail/{id}")]
 
@@ -148,7 +147,6 @@ namespace eProject.Controllers
             return Ok(award);
         }
 
-        //[HttpGet("GetAllSubmissions")]
         //Method Get All Submissions
         [HttpGet("GetAllSubmissions")]
 
@@ -163,56 +161,25 @@ namespace eProject.Controllers
         }
 
         //Method Get Submissions Review Detail
-        [HttpGet("GetSubmissionsReviewDetail/{submissionId}/{staffId}")]
-        public async Task<IActionResult> GetSubmissionsReviewDetail(int submissionId, int staffId)
+        [HttpGet("GetSubmissionsReviewDetail/{submissionId}")]
+        public async Task<IActionResult> GetSubmissionsReviewDetail(int submissionId)
         {
-            // Sử dụng FirstOrDefaultAsync để truy vấn với khóa composite
-            var reviewDetail = await _dbContext.SubmissionReviews
-                .Include(sr => sr.Submission)      // Bao gồm thông tin bài nộp
-                .Include(sr => sr.Staff)           // Bao gồm thông tin nhân viên đánh giá
-                .Include(sr => sr.RatingLevel)     // Bao gồm thông tin mức độ đánh giá
-                .FirstOrDefaultAsync(sr => sr.SubmissionId == submissionId && sr.StaffId == staffId);  // Truy vấn với cả hai khóa
+            var reviewDetail = await _dbContext.Submissions
+                .Where(s => s.Id == submissionId)
+                .Include(s => s.Student)
+                .Include(s => s.SubmissionReviews!)
+                .ThenInclude(sr => sr.Staff)
+                .ToListAsync();
 
-            // Kiểm tra nếu không tìm thấy đánh giá
             if (reviewDetail == null)
             {
-                return NotFound("Không tìm thấy đánh giá bài nộp này");
+                return NotFound("Can't Find This Submissions Review");
             }
-
-            // Trả về chi tiết đánh giá bài nộp với các trường theo yêu cầu
-            var submissionReviewDetail = new
-            {
-                // SubmissionId từ SubmissionReview
-                SubmissionId = reviewDetail.SubmissionId,
-
-                // StaffId từ SubmissionReview
-                StaffId = reviewDetail.StaffId,
-
-                // RatingId từ SubmissionReview (giả sử RatingId là một trường trong SubmissionReview)
-                RatingId = reviewDetail.RatingLevel?.Id ?? 0,  // Kiểm tra RatingLevel và trả về RatingId nếu có
-
-                // ReviewDate từ SubmissionReview
-                ReviewDate = reviewDetail.ReviewDate.ToString("dd/MM/yyyy"),
-
-                // ReviewText từ SubmissionReview
-                ReviewText = reviewDetail.ReviewText,
-
-                // Thông tin bài nộp (Submission)
-                SubmissionDescription = reviewDetail.Submission?.Description ?? "Không có mô tả",
-                SubmissionStatus = reviewDetail.Submission?.Status ?? "Chưa có trạng thái",
-
-                // Thông tin nhân viên (Staff)
-                StaffName = reviewDetail.Staff?.UserId ?? 0
-            };
-
-            // Trả về thông tin chi tiết
-            return Ok(submissionReviewDetail);
+            return Ok(reviewDetail);
         }
-
 
         //Method Get all artwork that have been send to exhibition
         [HttpGet("GetAllExhibition")]
-
         public async Task<IActionResult> GetAllExhibition()
         {
             var exhibitions = await _dbContext.Exhibitions.ToListAsync();
@@ -222,6 +189,7 @@ namespace eProject.Controllers
             }
             return Ok(exhibitions);
         }
+
         //Method Get exhibition by id
         [HttpGet("GetExhibitionDetail/{id}")]
         public async Task<IActionResult> GetExhibitionDetail(int id)
@@ -233,12 +201,13 @@ namespace eProject.Controllers
             }
             return Ok(exhibition);
         }
+
         //Method Get Teacher Detail
         [HttpGet("GetTeacherDetail/{id}")]
         public async Task<IActionResult> GetTeacherDetail(int id)
         {
             var teacher = await _dbContext.Staff.FindAsync(id);
-            if(teacher == null)
+            if (teacher == null)
             {
                 return NotFound("Can't Found This Teacher");
             }
