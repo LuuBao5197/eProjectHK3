@@ -82,11 +82,11 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetStudentDetail(int id)
         {
             var student = await _dbContext.Students
-                .Include(s => s.Submissions) // Lấy tất cả Submissions của học sinh
-                .ThenInclude(sub => sub.SubmissionReviews) // Lấy tất cả SubmissionReviews của từng Submission
-                .ThenInclude(review => review.Staff) // Lấy thông tin Staff cho mỗi SubmissionReview
-                .Include(s => s.User) // Lấy thông tin User của học sinh
-                .FirstOrDefaultAsync(s => s.Id == id); // Tìm học sinh theo ID
+                .Include(s => s.Submissions) 
+                .ThenInclude(sub => sub.SubmissionReviews) 
+                .ThenInclude(review => review.Staff) 
+                .Include(s => s.User) 
+                .FirstOrDefaultAsync(s => s.Id == id); 
 
             if (student == null)
             {
@@ -162,6 +162,54 @@ namespace eProject.Controllers
             return Ok(submissions);
         }
 
+        //Method Get Submissions Review Detail
+        [HttpGet("GetSubmissionsReviewDetail/{submissionId}/{staffId}")]
+        public async Task<IActionResult> GetSubmissionsReviewDetail(int submissionId, int staffId)
+        {
+            // Sử dụng FirstOrDefaultAsync để truy vấn với khóa composite
+            var reviewDetail = await _dbContext.SubmissionReviews
+                .Include(sr => sr.Submission)      // Bao gồm thông tin bài nộp
+                .Include(sr => sr.Staff)           // Bao gồm thông tin nhân viên đánh giá
+                .Include(sr => sr.RatingLevel)     // Bao gồm thông tin mức độ đánh giá
+                .FirstOrDefaultAsync(sr => sr.SubmissionId == submissionId && sr.StaffId == staffId);  // Truy vấn với cả hai khóa
+
+            // Kiểm tra nếu không tìm thấy đánh giá
+            if (reviewDetail == null)
+            {
+                return NotFound("Không tìm thấy đánh giá bài nộp này");
+            }
+
+            // Trả về chi tiết đánh giá bài nộp với các trường theo yêu cầu
+            var submissionReviewDetail = new
+            {
+                // SubmissionId từ SubmissionReview
+                SubmissionId = reviewDetail.SubmissionId,
+
+                // StaffId từ SubmissionReview
+                StaffId = reviewDetail.StaffId,
+
+                // RatingId từ SubmissionReview (giả sử RatingId là một trường trong SubmissionReview)
+                RatingId = reviewDetail.RatingLevel?.Id ?? 0,  // Kiểm tra RatingLevel và trả về RatingId nếu có
+
+                // ReviewDate từ SubmissionReview
+                ReviewDate = reviewDetail.ReviewDate.ToString("dd/MM/yyyy"),
+
+                // ReviewText từ SubmissionReview
+                ReviewText = reviewDetail.ReviewText,
+
+                // Thông tin bài nộp (Submission)
+                SubmissionDescription = reviewDetail.Submission?.Description ?? "Không có mô tả",
+                SubmissionStatus = reviewDetail.Submission?.Status ?? "Chưa có trạng thái",
+
+                // Thông tin nhân viên (Staff)
+                StaffName = reviewDetail.Staff?.UserId ?? 0
+            };
+
+            // Trả về thông tin chi tiết
+            return Ok(submissionReviewDetail);
+        }
+
+
         //Method Get all artwork that have been send to exhibition
         [HttpGet("GetAllExhibition")]
 
@@ -185,66 +233,16 @@ namespace eProject.Controllers
             }
             return Ok(exhibition);
         }
-        /*//Method Get Teacher Detail
+        //Method Get Teacher Detail
         [HttpGet("GetTeacherDetail/{id}")]
         public async Task<IActionResult> GetTeacherDetail(int id)
         {
-            var staff = await _dbContext.Staff
-                                        .Include(s => s.User)  // Include User information
-                                        .Include(s => s.Classes)  // Include the Classes assigned to the teacher
-                                        .Include(s => s.StaffSubjects)  // Include subjects the staff teaches
-                                        .Include(s => s.StaffQualifications)  // Include qualifications of the staff
-                                        .Include(s => s.OrganizedContests)  // Include contests organized by the teacher
-                                        .Include(s => s.OrganizedExhibitions)  // Include exhibitions organized by the teacher
-                                        .Include(s => s.SubmissionReviews)  // Include submission reviews by the teacher
-                                        .FirstOrDefaultAsync(s => s.Id == id);
-
-            if (staff == null)
+            var teacher = await _dbContext.Staff.FindAsync(id);
+            if(teacher == null)
             {
-                return NotFound("Staff not found.");
+                return NotFound("Can't Found This Teacher");
             }
-
-            // Create the response object that matches what the frontend expects
-            var response = new
-            {
-                teacherId = staff.Id,
-                teacherName = staff.User?.Name,
-                teacherEmail = staff.User?.Email,
-                teacherPhone = staff.User?.Phone,
-                joinDate = staff.JoinDate.ToString("yyyy-MM-dd"),
-                isReviewer = staff.IsReviewer,
-                classes = staff.Classes.Select(c => new
-                {
-                    classId = c.Id,
-                    className = c.Name,
-                    schoolYear = c.Year,
-                    totalStudents = c.StudentClasses.Count
-                }).ToList(),
-                staffSubjects = staff.StaffSubjects.Select(ss => new
-                {
-                    ss.Subject.Name  // Assuming there is a 'Name' property in the Subject model
-                }).ToList(),
-                staffQualifications = staff.StaffQualifications.Select(sq => new
-                {
-                    qualification = sq.Qualification  // Assuming there's a 'QualificationName' field
-                }).ToList(),
-                organizedContests = staff.OrganizedContests.Select(c => new
-                {
-                    c.Name,
-                }).ToList(),
-                organizedExhibitions = staff.OrganizedExhibitions.Select(e => new
-                {
-                    e.Name,
-                }).ToList(),
-                submissionReviews = staff.SubmissionReviews.Select(sr => new
-                {
-                    reviewText = sr.ReviewText,
-                    ratingLevel = sr.RatingLevel, // Assuming 'RatingLevel' is a string or enum
-                    reviewDate = sr.ReviewDate.ToString("yyyy-MM-dd")
-                }).ToList()
-            };
-
-            return Ok(response);
-        }*/
+            return Ok(teacher);
+        }
     }
 }
