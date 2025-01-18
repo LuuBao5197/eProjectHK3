@@ -27,6 +27,9 @@ public class DatabaseContext : DbContext
     public DbSet<StudentAward> StudentAwards { get; set; }
     public DbSet<RatingLevel> RatingLevels { get; set; }
     public DbSet<Condition> Conditions { get; set; }
+
+    public DbSet<Reject> Rejects { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Many-to-many relationships
