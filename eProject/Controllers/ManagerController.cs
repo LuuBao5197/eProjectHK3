@@ -18,23 +18,39 @@ namespace eProject.Controllers
         [HttpGet("GetAllClass")]
         public async Task<IActionResult> GetAllClass()
         {
-            var classes = await _dbContext.Classes.ToListAsync();
+            var classes = await _dbContext.Classes
+                .Include(c => c.Staff) 
+                .ThenInclude(s => s.User) 
+                .ToListAsync();
+
             if (classes == null || classes.Count == 0)
             {
                 return NotFound("There's no class");
             }
-            return Ok(classes);
+
+            var classesWithTeacher = classes.Select(c => new
+            {
+                c.Id,
+                c.Name,
+                c.Year,
+                c.TotalStudent,
+                TeacherName = c.Staff != null && c.Staff.User != null ? c.Staff.User.Name : "No teacher assigned"
+            }).ToList();
+
+            return Ok(classesWithTeacher);
         }
 
+        //Method Get Student Of Class
         [HttpGet("GetStudentByClass/{classId}")]
         public async Task<IActionResult> GetStudentByClass(int classId)
         {
             var classWithDetails = await _dbContext.Classes
-                .Include(c => c.StudentClasses)
-                    .ThenInclude(sc => sc.Student)
-                .Include(c => c.Staff)
-                    .ThenInclude(s => s.User)
-                .FirstOrDefaultAsync(c => c.Id == classId);
+                .Where(c => c.Id == classId) 
+                .Include(c => c.StudentClasses) 
+                    .ThenInclude(sc => sc.Student) 
+                .Include(c => c.Staff) 
+                    .ThenInclude(s => s.User) 
+                .FirstOrDefaultAsync(); 
 
             if (classWithDetails == null)
             {
@@ -42,8 +58,7 @@ namespace eProject.Controllers
             }
 
             var students = classWithDetails.StudentClasses
-                .Where(sc => sc.ClassId == classId)
-                .Select(sc => sc.Student)
+                .Select(sc => sc.Student) 
                 .ToList();
 
             if (!students.Any())
@@ -57,12 +72,19 @@ namespace eProject.Controllers
             {
                 ClassName = classWithDetails.Name,
                 SchoolYear = classWithDetails.Year,
+                Name = teacherName,
                 TeacherName = teacherName,
-                Students = students
+                Students = students.Select(s => new
+                {
+                    s.Id,
+                    s.ParentName,
+                    s.ParentPhoneNumber
+                }).ToList() 
             };
 
             return Ok(result);
         }
+
 
 
 
@@ -96,7 +118,20 @@ namespace eProject.Controllers
             return Ok(student);
         }
 
-
+        //Method Get All Value Of Awards
+        [HttpGet("GetAllValue")]
+        public async Task<IActionResult> GetAllValue()
+        {
+            var values = await _dbContext.Awards
+                .Include(a => a.Contest)
+                .Select(a => new
+                {
+                    a.Value,
+                    a.Contest.StartDate
+                })
+                .ToListAsync();
+            return Ok(values);
+        }
 
         //Method Get All Contest 
         [HttpGet("GetAllContest")]
