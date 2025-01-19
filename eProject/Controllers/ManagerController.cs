@@ -32,8 +32,8 @@ namespace eProject.Controllers
             var classWithDetails = await _dbContext.Classes
                 .Include(c => c.StudentClasses)
                     .ThenInclude(sc => sc.Student)
-                .Include(c => c.Staff) 
-                    .ThenInclude(s => s.User) 
+                .Include(c => c.Staff)
+                    .ThenInclude(s => s.User)
                 .FirstOrDefaultAsync(c => c.Id == classId);
 
             if (classWithDetails == null)
@@ -82,11 +82,11 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetStudentDetail(int id)
         {
             var student = await _dbContext.Students
-                .Include(s => s.Submissions) // Lấy tất cả Submissions của học sinh
-                .ThenInclude(sub => sub.SubmissionReviews) // Lấy tất cả SubmissionReviews của từng Submission
-                .ThenInclude(review => review.Staff) // Lấy thông tin Staff cho mỗi SubmissionReview
-                .Include(s => s.User) // Lấy thông tin User của học sinh
-                .FirstOrDefaultAsync(s => s.Id == id); // Tìm học sinh theo ID
+                .Include(s => s.Submissions)
+                .ThenInclude(sub => sub.SubmissionReviews)
+                .ThenInclude(review => review.Staff)
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.Id == id);
 
             if (student == null)
             {
@@ -134,7 +134,6 @@ namespace eProject.Controllers
             return Ok(awards);
         }
 
-        //[HttpGet("GetAwardDetail/{id}")]
         //Method Get Detail of the prizes that have been awarded By Id
         [HttpGet("GetAwardDetail/{id}")]
 
@@ -148,7 +147,6 @@ namespace eProject.Controllers
             return Ok(award);
         }
 
-        //[HttpGet("GetAllSubmissions")]
         //Method Get All Submissions
         [HttpGet("GetAllSubmissions")]
 
@@ -162,9 +160,26 @@ namespace eProject.Controllers
             return Ok(submissions);
         }
 
+        //Method Get Submissions Review Detail
+        [HttpGet("GetSubmissionsReviewDetail/{submissionId}")]
+        public async Task<IActionResult> GetSubmissionsReviewDetail(int submissionId)
+        {
+            var reviewDetail = await _dbContext.Submissions
+                .Where(s => s.Id == submissionId)
+                .Include(s => s.Student)
+                .Include(s => s.SubmissionReviews!)
+                .ThenInclude(sr => sr.Staff)
+                .ToListAsync();
+
+            if (reviewDetail == null)
+            {
+                return NotFound("Can't Find This Submissions Review");
+            }
+            return Ok(reviewDetail);
+        }
+
         //Method Get all artwork that have been send to exhibition
         [HttpGet("GetAllExhibition")]
-
         public async Task<IActionResult> GetAllExhibition()
         {
             var exhibitions = await _dbContext.Exhibitions.ToListAsync();
@@ -175,8 +190,8 @@ namespace eProject.Controllers
             return Ok(exhibitions);
         }
 
-        [HttpGet("GetExhibitionDetail/{id}")]
         //Method Get exhibition by id
+        [HttpGet("GetExhibitionDetail/{id}")]
         public async Task<IActionResult> GetExhibitionDetail(int id)
         {
             var exhibition = await _dbContext.Exhibitions.FindAsync(id);
@@ -185,6 +200,18 @@ namespace eProject.Controllers
                 return NotFound("Can't Find This Award");
             }
             return Ok(exhibition);
+        }
+
+        //Method Get Teacher Detail
+        [HttpGet("GetTeacherDetail/{id}")]
+        public async Task<IActionResult> GetTeacherDetail(int id)
+        {
+            var teacher = await _dbContext.Staff.FindAsync(id);
+            if (teacher == null)
+            {
+                return NotFound("Can't Found This Teacher");
+            }
+            return Ok(teacher);
         }
     }
 }
