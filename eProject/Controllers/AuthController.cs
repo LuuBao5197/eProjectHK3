@@ -233,13 +233,18 @@ namespace eProject.Controllers
             {
                 return BadRequest("New password and confirm new password do not match");
             }
+           
 
             // Update the password and set IsFirstLogin to false
             user.Password = request.newPassword;
-            user.IsFirstLogin = false;
+            if (!user.IsFirstLogin)
+            {
+                user.IsFirstLogin = true;
+            }
 
             // Save the updated user
             await _userRepository.UpdateUser(user);
+
 
             return Ok(new { message = "Password updated successfully, and first login flag updated." });
         }
