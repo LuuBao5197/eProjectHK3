@@ -98,12 +98,10 @@ public class CreateStaffRequest
     public DateTime Dob { get; set; }
 
     // Các mối quan hệ sẽ là danh sách các đối tượng ID hoặc chi tiết
-    public ICollection<int>? ClassIds { get; set; }
+  
     public ICollection<int>? StaffSubjectIds { get; set; }
     public ICollection<int>? StaffQualificationIds { get; set; }
-    public ICollection<int>? ContestIds { get; set; }
-    public ICollection<int>? ExhibitionIds { get; set; }
-    public ICollection<int>? SubmissionReviewIds { get; set; }
+  
 }
 
 
@@ -180,7 +178,7 @@ public class StudentClass
 
     public Student? Student { get; set; }
     public Class? Class { get; set; }
-}
+} 
 
 
 public class Contest
