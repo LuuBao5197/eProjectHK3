@@ -1,8 +1,12 @@
-﻿ using Microsoft.AspNetCore.Http;
+﻿using Azure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using MUSICAPI.Helpers;
 using System;
+using System.Net.Mail;
+using System.Net;
 using System.Net.WebSockets;
 
 namespace eProject.Controllers
@@ -14,9 +18,11 @@ namespace eProject.Controllers
         private readonly DatabaseContext _dbContext;
         private readonly string contestFolder = "contestThumbnail";
         private readonly string exhibitionFolder = "exhibitionThumbnail";
-        public StaffController(DatabaseContext dbContext)
+        private IConfiguration _configuration;
+        public StaffController(DatabaseContext dbContext, IConfiguration configuration)
         {
             _dbContext = dbContext;
+            _configuration = configuration;
         }
 
         [HttpGet("GetAllStudent{page}")]
@@ -511,6 +517,123 @@ namespace eProject.Controllers
             var staff = await _dbContext.Staff.FirstOrDefaultAsync(s => s.UserId == id);
             if (staff == null) return BadRequest("Not fount any Staff ");
             return Ok(staff);
+        }
+
+        [HttpPatch("SendContestDraftForReview/{id}")]
+        public async Task<IActionResult> SendContestDraftForReview(int id)
+        {
+            var contest = await _dbContext.Contests.FindAsync(id);
+            if (contest == null)
+            {
+                return NotFound("Contest not found.");
+            }
+            var manager = await _dbContext.Users.FirstOrDefaultAsync(u => u.Role == "Manager");
+            if (manager == null)
+            {
+                return BadRequest("Manager not found");
+            }
+
+            try
+            {
+                contest.Status = "Pending";
+
+                // Lưu thay đổi
+                _dbContext.Contests.Update(contest);
+                await _dbContext.SaveChangesAsync();
+                SendEmail(manager.Email, "Review Draft Contest", "<p> Em da soan xong ban thao cuoc thi,  gui xep duyet giup em </p>");
+                return Ok(contest);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPatch("SendExhibitionForReview/{id}")]
+        public async Task<IActionResult> SendExhibitionForReview(int id)
+        {
+            var exhibition = await _dbContext.Exhibitions.FindAsync(id);
+            if (exhibition == null)
+            {
+                return NotFound("Exhibition not found.");
+            }
+            var manager = await _dbContext.Users.FirstOrDefaultAsync(u => u.Role == "Manager");
+            if (manager == null)
+            {
+                return BadRequest("Manager not found");
+            }
+
+            try
+            {
+               exhibition.status = "Pending";
+
+                // Lưu thay đổi
+                _dbContext.Exhibitions.Update(exhibition);
+                await _dbContext.SaveChangesAsync();
+                SendEmail(manager.Email, "Review Exhibition", "<p> Co 1 ban thao trien lam do giao vien soan dang cho su phe duyet tu ban </p>");
+                return Ok(exhibition);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPatch("SendAwardForReview/{id}")]
+        public async Task<IActionResult> SendAwardForReview(int id)
+        {
+            var award = await _dbContext.Awards.FindAsync(id);
+            if (award == null)
+            {
+                return NotFound(" not found.");
+            }
+            var manager = await _dbContext.Users.FirstOrDefaultAsync(u => u.Role == "Manager");
+            if (manager == null)
+            {
+                return BadRequest("Manager not found");
+            }
+
+            try
+            {
+                award.Status = "Pending";
+
+                // Lưu thay đổi
+                _dbContext.Awards.Update(award);
+                await _dbContext.SaveChangesAsync();
+                SendEmail(manager.Email, "Review Award", "<p> Co 1 ban thao giai thuong do giao vien soan dang cho su phe duyet tu ban </p>");
+                return Ok(award);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        private void SendEmail(string toEmail, string subject, string body)
+        {
+            // Đọc cấu hình email từ appsettings.json
+            var emailSettings = _configuration.GetSection("EmailSettings");
+
+            var smtpClient = new SmtpClient
+            {
+                Host = emailSettings["Host"], // Địa chỉ SMTP server (ví dụ: smtp.gmail.com)
+                Port = int.Parse(emailSettings["Port"]), // Port SMTP (ví dụ: 587)
+                Credentials = new NetworkCredential(emailSettings["Username"], emailSettings["Password"]), // Tài khoản email
+                EnableSsl = bool.Parse(emailSettings["EnableSsl"]) // Bật SSL
+            };
+
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(emailSettings["Username"]), // Địa chỉ email gửi đi
+                Subject = subject,
+                Body = body,
+                IsBodyHtml = true // Nội dung email là HTML
+            };
+
+            mailMessage.To.Add(toEmail); // Địa chỉ email nhận
+
+            // Gửi email
+            smtpClient.Send(mailMessage);
         }
     }
 }
