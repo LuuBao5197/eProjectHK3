@@ -122,7 +122,7 @@ namespace eProject.Controllers
             // Tạo OTP ngẫu nhiên
             var otp = new Random().Next(100000, 999999).ToString(); // OTP 6 chữ số
             user.OTP = otp;
-            user.OTPExpired = DateTime.UtcNow.AddMinutes(5); // OTP hết hạn sau 5 phút
+            user.OTPExpired = DateTime.UtcNow.AddMinutes(1); // OTP hết hạn sau 5 phút
             await _userRepository.UpdateUser(user);
 
             // Gửi OTP qua email
@@ -162,6 +162,12 @@ namespace eProject.Controllers
                 return NotFound("User not found");
             }
 
+            // Kiểm tra xem OTP có hết hạn không
+            if (user.OTPExpired == null || user.OTPExpired < DateTime.Now)
+            {
+                return BadRequest("OTP has expired or is not valid.");
+            }
+
             // Cập nhật mật khẩu mới
             user.Password = request.NewPassword;
 
@@ -174,6 +180,7 @@ namespace eProject.Controllers
 
             return Ok("Password has been reset successfully.");
         }
+
 
 
 
