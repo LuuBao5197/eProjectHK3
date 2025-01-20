@@ -41,6 +41,7 @@ public class ClassController : ControllerBase
         {
             Id = classEntity.Id,
             Name = classEntity.Name,
+            Year = classEntity.Year,
             TotalStudent = classEntity.StudentClasses?.Count ?? 0,
             Students = classEntity.StudentClasses?.Select(sc => new
             {
@@ -55,17 +56,28 @@ public class ClassController : ControllerBase
     }
 
 
+    [HttpGet("staff")]
+    public async Task<IActionResult> GetAllStaff()
+    {
+        var staffList = await _context.Staff
+                                            .Include(c=>c.User)
+                                            .ToListAsync();
+        return Ok(staffList);
+    }
 
-    // Tạo một lớp mới
+
     [HttpPost]
     public async Task<IActionResult> CreateClass([FromBody] Class newClass)
     {
-        if (!ModelState.IsValid)
+        if (newClass == null || !ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            return BadRequest("Invalid class data.");
         }
-        await _context.Classes.AddAsync(newClass);
+
+        // Thêm lớp mới vào cơ sở dữ liệu
+        _context.Classes.Add(newClass);
         await _context.SaveChangesAsync();
+
         return CreatedAtAction(nameof(GetClassById), new { id = newClass.Id }, newClass);
     }
 

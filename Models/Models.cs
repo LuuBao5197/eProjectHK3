@@ -178,7 +178,7 @@ public class StudentClass
 
     public Student? Student { get; set; }
     public Class? Class { get; set; }
-}
+} 
 
 
 public class Contest

@@ -32,6 +32,13 @@ namespace eProject.Controllers
             {
                 try
                 {
+                    // Kiểm tra email đã tồn tại
+                    var existingUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+                    if (existingUser != null)
+                    {
+                        return BadRequest(new { message = "Email already exists." });
+                    }
+
                     // Tạo đối tượng User
                     var user = new User
                     {
@@ -44,8 +51,7 @@ namespace eProject.Controllers
                         Dob = request.Dob.ToString("yyyy-MM-dd"),
                         Status = true,
                         JoinDate = request.JoinDate,
-                        Expired = DateTime.MaxValue,
-                        // Token = Guid.NewGuid().ToString() // Uncomment nếu cần token
+                        Expired = DateTime.MaxValue
                     };
 
                     // Lưu User vào cơ sở dữ liệu
@@ -100,6 +106,7 @@ namespace eProject.Controllers
                 }
             }
         }
+
 
 
 

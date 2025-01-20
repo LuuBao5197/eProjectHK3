@@ -27,6 +27,7 @@ namespace eProject.Controllers
                 return BadRequest("Invalid data.");
             }
 
+
             // Tạo đối tượng User từ thông tin request
             var user = new User
             {
@@ -211,6 +212,18 @@ namespace eProject.Controllers
 
             // Trả về thông tin chi tiết Staff
             return Ok(staff);
+        }
+        [HttpGet("check-email")]
+        public async Task<IActionResult> CheckEmailExists([FromQuery] string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return BadRequest("Email is required.");
+            }
+
+            var emailExists = await _dbContext.Users.AnyAsync(u => u.Email == email);
+
+            return Ok(new { exists = emailExists });
         }
     }
 }
