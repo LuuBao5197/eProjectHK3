@@ -21,6 +21,7 @@ namespace eProject.Controllers
             var contests = await _dbContext.Contests
                                            .Include(c => c.Organizer)  // Ensure the organizer is included
                                            .ThenInclude(o => o.User)  // Ensure the user's name is included
+                                           .Where(c => c.Status == "Published") // Filter contests with Published status
                                            .Select(c => new
                                            {
                                                c.Id,
@@ -32,12 +33,15 @@ namespace eProject.Controllers
                                                c.CreatedAt,
                                                c.UpdatedAt,
                                                OrganizerName = c.Organizer != null && c.Organizer.User != null ? c.Organizer.User.Name : null, // Get organizer's name
-                                               c.Status
+                                               c.Status,
+                                               c.Thumbnail,
+                                               c.Phase
                                            })
                                            .ToListAsync();
 
             return Ok(contests);
         }
+
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetContest(int id)
