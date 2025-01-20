@@ -43,15 +43,15 @@ namespace eProject.Controllers
             user.RefreshToken = Guid.NewGuid().ToString();
             user.RefreshTokenExpired = DateTime.UtcNow.AddDays(7);
             await _userRepository.UpdateUser(user);
-        /*    Response.Cookies.Append("authToken", tokenString, new CookieOptions
+
+            return Ok(new
             {
-                HttpOnly = true,
-                Secure = true,  // Đảm bảo chỉ gửi qua HTTPS
-                SameSite = SameSiteMode.Strict, // Chính sách bảo mật SameSite
-                Expires = DateTime.UtcNow.AddDays(7) // Token hết hạn sau 7 ngày
-            });*/
-            return Ok(new { token = tokenString, refreshToken = user.RefreshToken });
+                token = tokenString,
+                refreshToken = user.RefreshToken,
+                isFirstLogin = user.IsFirstLogin // Thêm thuộc tính IsFirstLogin
+            });
         }
+
 
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefrestToken(TokenRequest tokenRequest)
@@ -122,7 +122,7 @@ namespace eProject.Controllers
             // Tạo OTP ngẫu nhiên
             var otp = new Random().Next(100000, 999999).ToString(); // OTP 6 chữ số
             user.OTP = otp;
-            user.OTPExpired = DateTime.UtcNow.AddMinutes(5); // OTP hết hạn sau 5 phút
+            user.OTPExpired = DateTime.UtcNow.AddMinutes(1); // OTP hết hạn sau 5 phút
             await _userRepository.UpdateUser(user);
 
             // Gửi OTP qua email
@@ -162,6 +162,12 @@ namespace eProject.Controllers
                 return NotFound("User not found");
             }
 
+            // Kiểm tra xem OTP có hết hạn không
+            if (user.OTPExpired == null || user.OTPExpired < DateTime.Now)
+            {
+                return BadRequest("OTP has expired or is not valid.");
+            }
+
             // Cập nhật mật khẩu mới
             user.Password = request.NewPassword;
 
@@ -174,6 +180,7 @@ namespace eProject.Controllers
 
             return Ok("Password has been reset successfully.");
         }
+
 
 
 
@@ -227,14 +234,16 @@ namespace eProject.Controllers
                 return BadRequest("New password and confirm new password do not match");
             }
 
-            // Update the password
+            // Update the password and set IsFirstLogin to false
             user.Password = request.newPassword;
+            user.IsFirstLogin = false;
 
             // Save the updated user
             await _userRepository.UpdateUser(user);
 
-            return Ok("Password has been updated successfully.");
+            return Ok(new { message = "Password updated successfully, and first login flag updated." });
         }
+
 
         [HttpPost("update-email/{id}")]
         public async Task<IActionResult> UpdateEmail(int id, UpdateEmailRequest request)
