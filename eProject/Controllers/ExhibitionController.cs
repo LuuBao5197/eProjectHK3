@@ -22,6 +22,7 @@ namespace eProject.Controllers
             var exhibitions = await _dbContext.Exhibitions
                 .Include(e => e.Organizer) // Tải kèm thông tin người tổ chức
                 .ThenInclude(s => s.User) // Tải kèm thông tin User của người tổ chức
+                .Where(e => e.status == "Published") // Chỉ lấy các exhibition có trạng thái Published
                 .Select(e => new
                 {
                     e.Id,
@@ -30,13 +31,13 @@ namespace eProject.Controllers
                     e.EndDate,
                     e.Location,
                     e.thumbnail,
-                    OrganizerName = e.Organizer != null && e.Organizer.User != null ? e.Organizer.User.Name : null // Lấy tên người tổ chức
+                    e.Phase,
+                    OrganizerName = e.Organizer != null && e.Organizer.User != null ? e.Organizer.User.Name : null
                 })
                 .ToListAsync();
 
             return Ok(exhibitions);
         }
-
 
 
         [HttpGet("{id}")]
