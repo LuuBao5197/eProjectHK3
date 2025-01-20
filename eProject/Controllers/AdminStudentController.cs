@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using OfficeOpenXml; // Thêm thư viện
 namespace eProject.Controllers
 {
     [Route("api/[controller]")]
@@ -32,6 +32,13 @@ namespace eProject.Controllers
             {
                 try
                 {
+                    // Kiểm tra email đã tồn tại
+                    var existingUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+                    if (existingUser != null)
+                    {
+                        return BadRequest(new { message = "Email already exists." });
+                    }
+
                     // Tạo đối tượng User
                     var user = new User
                     {
@@ -44,8 +51,7 @@ namespace eProject.Controllers
                         Dob = request.Dob.ToString("yyyy-MM-dd"),
                         Status = true,
                         JoinDate = request.JoinDate,
-                        Expired = DateTime.MaxValue,
-                        // Token = Guid.NewGuid().ToString() // Uncomment nếu cần token
+                        Expired = DateTime.MaxValue
                     };
 
                     // Lưu User vào cơ sở dữ liệu
@@ -100,6 +106,10 @@ namespace eProject.Controllers
                 }
             }
         }
+
+
+
+
         [HttpPost("import-students")]
         public async Task<IActionResult> ImportStudents(IFormFile file)
         {
@@ -115,88 +125,140 @@ namespace eProject.Controllers
             {
                 try
                 {
-                    using (var stream = file.OpenReadStream())
-                    using (var reader = new StreamReader(stream))
+                    if (file.ContentType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                        file.ContentType == "application/vnd.ms-excel")
                     {
-                        string line;
-                        bool isFirstLine = true;
+                        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-                        // Đọc từng dòng trong file
-                        while ((line = await reader.ReadLineAsync()) != null)
+                        using (var stream = file.OpenReadStream())
+                        using (var package = new ExcelPackage(stream))
                         {
-                            // Bỏ qua dòng tiêu đề
-                            if (isFirstLine)
+                            var worksheet = package.Workbook.Worksheets[0];
+                            int rowCount = worksheet.Dimension.Rows;
+
+                            // Đọc và kiểm tra email trùng từ file
+                            var emailsInFile = new List<string>();
+                            for (int row = 2; row <= rowCount; row++)
                             {
-                                isFirstLine = false;
-                                continue;
+                                var email = worksheet.Cells[row, 4]?.Text;
+                                if (!string.IsNullOrEmpty(email))
+                                {
+                                    emailsInFile.Add(email);
+                                }
                             }
 
-                            // Tách các trường từ dòng
-                            var fields = line.Split(',');
-
-                            if (fields.Length < 10)
+                            // Kiểm tra email trùng trong file
+                            var duplicatesInFile = emailsInFile.GroupBy(x => x)
+                                                             .Where(g => g.Count() > 1)
+                                                             .Select(g => g.Key)
+                                                             .ToList();
+                            if (duplicatesInFile.Any())
                             {
-                                return BadRequest($"Invalid data format in line: {line}");
+                                return BadRequest(new
+                                {
+                                    message = "Duplicate emails found in the import file",
+                                    duplicateEmails = duplicatesInFile
+                                });
                             }
 
-                            // Tạo đối tượng User
-                            var user = new User
+                            // Kiểm tra email đã tồn tại trong database
+                            var existingEmails = await _dbContext.Users
+                                .Where(u => emailsInFile.Contains(u.Email))
+                                .Select(u => u.Email)
+                                .ToListAsync();
+
+                            if (existingEmails.Any())
                             {
-                                Username = fields[0],
-                                Password = fields[1],
-                                Role = "student",
-                                Name = fields[2],
-                                Email = fields[3],
-                                Phone = fields[4],
-                                Dob = DateTime.Parse(fields[5]).ToString("yyyy-MM-dd"),
-                                JoinDate = DateTime.Parse(fields[6]),
-                                Expired = DateTime.MaxValue
-                            };
-
-                            // Lưu User vào cơ sở dữ liệu
-                            _dbContext.Users.Add(user);
-                            await _dbContext.SaveChangesAsync();
-
-                            // Tạo đối tượng Student
-                            var student = new Student
-                            {
-                                UserId = user.Id,
-                                EnrollmentDate = DateTime.Parse(fields[7]),
-                                ParentName = fields[8],
-                                ParentPhoneNumber = fields[9],
-                                StudentClasses = fields.Length > 10
-                                    ? fields[10].Split('|').Select(classId => new StudentClass { ClassId = int.Parse(classId) }).ToList()
-                                    : null
-                            };
-
-                            students.Add(student);
-                            _dbContext.Students.Add(student);
-                            await _dbContext.SaveChangesAsync();
-
-                            // Gửi email
-                            var emailRequest = new EmailRequest
-                            {
-                                ToMail = user.Email,
-                                Subject = "Welcome to Our System",
-                                HtmlContent = $"Dear {user.Name},<br/><br/>" +
-                                              "Your account has been successfully created. Below are your login details:<br/>" +
-                                              $"<b>Username:</b> {user.Email}<br/>" +
-                                              $"<b>Password:</b> {user.Password}<br/><br/>" +
-                                              "Best regards,<br/>The Team"
-                            };
-
-                            try
-                            {
-                                await _emailService.SendMailAsync(emailRequest);
+                                return BadRequest(new
+                                {
+                                    message = "Some emails already exist in the system",
+                                    duplicateEmails = existingEmails
+                                });
                             }
-                            catch (Exception ex)
+
+                            // Tiếp tục với quy trình import
+                            for (int row = 2; row <= rowCount; row++)
                             {
-                                emailErrors.Add($"Error sending email to {user.Email}: {ex.Message}");
+                                var fields = new List<string>();
+                                for (int col = 1; col <= 11; col++)
+                                {
+                                    fields.Add(worksheet.Cells[row, col]?.Text);
+                                }
+
+                                if (fields.Count < 10 || fields.Take(10).Any(string.IsNullOrEmpty))
+                                {
+                                    return BadRequest($"Invalid data format in row {row}");
+                                }
+
+                                var user = new User
+                                {
+                                    Username = fields[0],
+                                    Password = fields[1],
+                                    Role = "student",
+                                    Name = fields[2],
+                                    Email = fields[3],
+                                    Phone = fields[4],
+                                    Dob = DateTime.Parse(fields[5]).ToString("yyyy-MM-dd"),
+                                    JoinDate = DateTime.Parse(fields[6]),
+                                    Expired = DateTime.MaxValue
+                                };
+
+                                _dbContext.Users.Add(user);
+                                await _dbContext.SaveChangesAsync();
+
+                                var student = new Student
+                                {
+                                    UserId = user.Id,
+                                    EnrollmentDate = DateTime.Parse(fields[7]),
+                                    ParentName = fields[8],
+                                    ParentPhoneNumber = fields[9]
+                                };
+
+                                _dbContext.Students.Add(student);
+                                await _dbContext.SaveChangesAsync();
+
+                                if (fields.Count > 10 && !string.IsNullOrEmpty(fields[10]))
+                                {
+                                    var studentClass = new StudentClass
+                                    {
+                                        ClassId = int.Parse(fields[10].Trim()),
+                                        StudentId = student.Id
+                                    };
+
+                                    _dbContext.StudentClasses.Add(studentClass);
+                                    student.StudentClasses = new List<StudentClass> { studentClass };
+                                    await _dbContext.SaveChangesAsync();
+                                }
+
+                                students.Add(student);
+
+                                var emailRequest = new EmailRequest
+                                {
+                                    ToMail = user.Email,
+                                    Subject = "Welcome to Our System",
+                                    HtmlContent = $"Dear {user.Name},<br/><br/>" +
+                                                "Your account has been successfully created. Below are your login details:<br/>" +
+                                                $"<b>Username:</b> {user.Email}<br/>" +
+                                                $"<b>Password:</b> {user.Password}<br/><br/>" +
+                                                "Best regards,<br/>The Team"
+                                };
+
+                                try
+                                {
+                                    await _emailService.SendMailAsync(emailRequest);
+                                }
+                                catch (Exception ex)
+                                {
+                                    emailErrors.Add($"Error sending email to {user.Email}: {ex.Message}");
+                                }
                             }
                         }
                     }
+                    else
+                    {
+                        return BadRequest("Only Excel files (.xls, .xlsx) are supported.");
+                    }
 
-                    // Commit transaction
                     await transaction.CommitAsync();
 
                     return Ok(new
@@ -208,10 +270,10 @@ namespace eProject.Controllers
                 }
                 catch (Exception ex)
                 {
+                    await transaction.RollbackAsync();
                     var innerException = ex.InnerException != null ? ex.InnerException.Message : "No inner exception";
                     return StatusCode(500, $"Error importing students: {ex.Message}. Inner exception: {innerException}");
                 }
-
             }
         }
 
@@ -238,7 +300,7 @@ namespace eProject.Controllers
             var students = await _dbContext.Students
                                             .Include(s=>s.User)
                                             .Include(s => s.StudentClasses)
-                                    .ThenInclude(sc => sc.Class)
+                                            .ThenInclude(sc => sc.Class)
                                             .ToListAsync();
 
             if (students == null || students.Count == 0)
