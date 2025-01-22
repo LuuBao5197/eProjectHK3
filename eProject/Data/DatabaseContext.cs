@@ -26,6 +26,9 @@ public class DatabaseContext : DbContext
     public DbSet<Award> Awards { get; set; }
     public DbSet<StudentAward> StudentAwards { get; set; }
     public DbSet<RatingLevel> RatingLevels { get; set; }
+    public DbSet<Condition> Conditions { get; set; }
+
+    public DbSet<Reject> Rejects { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -109,16 +112,11 @@ public class DatabaseContext : DbContext
             .HasForeignKey(sr => sr.RatingId)
             .OnDelete(DeleteBehavior.Restrict);
 
-      /*  modelBuilder.Entity<StudentClass>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-        modelBuilder.Entity<StaffSubject>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+        modelBuilder.Entity<Condition>()
+          .HasOne(c => c.Contest)
+          .WithMany(c => c.Conditions)
+          .HasForeignKey(c => c.ContestId)
+          .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<StudentAward>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-        modelBuilder.Entity<StaffQualification>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-        modelBuilder.Entity<SubmissionReview>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-        modelBuilder.Entity<ExhibitionArtwork>().Property(e => e.Id).ValueGeneratedOnAdd().HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-*/
     }
 }
