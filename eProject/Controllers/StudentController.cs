@@ -24,7 +24,7 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetContest()
         {
             var contests = await _dbContext.Contests.Include(c=>c.Organizer.User)
-                .Where(c=>c.IsActive==true ).ToListAsync();
+                .Where(c=>c.Status== "Published").ToListAsync();
             return Ok(contests);
         }
 
