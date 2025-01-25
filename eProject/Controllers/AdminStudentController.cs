@@ -19,9 +19,8 @@ namespace eProject.Controllers
             _emailService = emailService;
         }
         // Tạo Student
-
         [HttpPost("student")]
-        public async Task<IActionResult> AddStudent(CreateStudentRequest request)
+        public async Task<IActionResult> AddStudent([FromForm] CreateStudentRequest request, IFormFile profileImage)
         {
             if (request == null)
             {
@@ -39,19 +38,40 @@ namespace eProject.Controllers
                         return BadRequest(new { message = "Email already exists." });
                     }
 
+                    // Xử lý tải ảnh lên
+                    string imagePath = null;
+                    if (profileImage != null && profileImage.Length > 0)
+                    {
+                        var uploadFolder = Path.Combine( "Uploads", "UserAvatar");
+                        Directory.CreateDirectory(uploadFolder);
+
+                        var fileExtension = Path.GetExtension(profileImage.FileName);
+                        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+                        var filePath = Path.Combine(uploadFolder, uniqueFileName);
+
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await profileImage.CopyToAsync(fileStream);
+                        }
+
+                        imagePath = $"/Uploads/UserAvatar/{uniqueFileName}";
+                    }
+
                     // Tạo đối tượng User
                     var user = new User
                     {
                         Username = request.Username,
                         Password = request.Password,
-                        Role = "student", // Gán role là student
+                        Role = "student",
                         Name = request.Name,
                         Email = request.Email,
                         Phone = request.Phone,
+                        Address = request.Address,
                         Dob = request.Dob.ToString("yyyy-MM-dd"),
                         Status = true,
                         JoinDate = request.JoinDate,
-                        Expired = DateTime.MaxValue
+                        Expired = DateTime.MaxValue,
+                        Imagepath = imagePath // Thêm đường dẫn ảnh
                     };
 
                     // Lưu User vào cơ sở dữ liệu
@@ -96,19 +116,21 @@ namespace eProject.Controllers
                         return StatusCode(500, $"Error sending email: {ex.Message}");
                     }
 
-                    return Ok(new { message = "Student created successfully, email sent", student = student });
+                    return Ok(new
+                    {
+                        message = "Student created successfully, email sent",
+                        student = student,
+                        imagePath = imagePath
+                    });
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     // Rollback transaction nếu có lỗi xảy ra
                     await transaction.RollbackAsync();
-                    return StatusCode(500, "An error occurred while creating the student.");
+                    return StatusCode(500, $"An error occurred while creating the student: {ex.Message}");
                 }
             }
         }
-
-
-
 
         [HttpPost("import-students")]
         public async Task<IActionResult> ImportStudents(IFormFile file)
@@ -180,12 +202,12 @@ namespace eProject.Controllers
                             for (int row = 2; row <= rowCount; row++)
                             {
                                 var fields = new List<string>();
-                                for (int col = 1; col <= 11; col++)
+                                for (int col = 1; col <= 12; col++)  // Cập nhật số cột thành 12 để bao gồm Address
                                 {
                                     fields.Add(worksheet.Cells[row, col]?.Text);
                                 }
 
-                                if (fields.Count < 10 || fields.Take(10).Any(string.IsNullOrEmpty))
+                                if (fields.Count < 11 || fields.Take(11).Any(string.IsNullOrEmpty))
                                 {
                                     return BadRequest($"Invalid data format in row {row}");
                                 }
@@ -200,7 +222,8 @@ namespace eProject.Controllers
                                     Phone = fields[4],
                                     Dob = DateTime.Parse(fields[5]).ToString("yyyy-MM-dd"),
                                     JoinDate = DateTime.Parse(fields[6]),
-                                    Expired = DateTime.MaxValue
+                                    Expired = DateTime.MaxValue,
+                                    Address = fields[10]  // Gán giá trị Address từ cột 11
                                 };
 
                                 _dbContext.Users.Add(user);
@@ -217,11 +240,11 @@ namespace eProject.Controllers
                                 _dbContext.Students.Add(student);
                                 await _dbContext.SaveChangesAsync();
 
-                                if (fields.Count > 10 && !string.IsNullOrEmpty(fields[10]))
+                                if (fields.Count > 11 && !string.IsNullOrEmpty(fields[11]))
                                 {
                                     var studentClass = new StudentClass
                                     {
-                                        ClassId = int.Parse(fields[10].Trim()),
+                                        ClassId = int.Parse(fields[11].Trim()),
                                         StudentId = student.Id
                                     };
 
