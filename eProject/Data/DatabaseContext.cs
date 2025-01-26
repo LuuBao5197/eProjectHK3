@@ -29,6 +29,7 @@ public class DatabaseContext : DbContext
     public DbSet<Condition> Conditions { get; set; }
 
     public DbSet<Reject> Rejects { get; set; }
+    public DbSet<Request> Requests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

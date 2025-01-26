@@ -361,3 +361,13 @@ public class Reject
     public DateTime ModifiedDate { get; set; }
 
 }
+
+public class Request
+{
+    public int Id { get; set; }
+    public DateTime MeetingTime { get; set; }
+    [RegularExpression("^(Accepted|Approving|Rejected)$")]
+    public string Status { get; set; } = "Approving";
+    public Staff? Organized { get; set; }
+
+}

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace eProject.Controllers
 {
@@ -248,5 +249,63 @@ namespace eProject.Controllers
             }
             return Ok(teacher);
         }
+
+        //Method Get Meeting/Request
+        [HttpGet("GetAllRequest")]
+        public async Task<IActionResult> GetAllRequest()
+        {
+            var requests = await _dbContext.Requests.ToListAsync();
+            if (requests == null)
+            {
+                return NotFound("There's No Request");
+            }
+            return Ok(requests);
+        }
+
+        //Method Create Meeting/Request
+        [HttpPost("CreateRequest")]
+        public async Task<IActionResult> CreateRequest(Request request)
+        {
+            await _dbContext.Requests.AddAsync(request);
+            await _dbContext.SaveChangesAsync();
+            return Ok(request);
+
+        }
+
+        //Method Update Meeting/Request
+        [HttpPut("UpdateRequest/{id}")]
+        public async Task<IActionResult> UpdateRequest(int id, Request request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new { message = "Data is not valid" });
+                }
+
+                if (id != request.Id)
+                {
+                    return NotFound(new { message = "No result about this request" });
+                }
+
+                var existingRequest = await _dbContext.Requests.FindAsync(id);
+                if (existingRequest == null)
+                {
+                    return NotFound(new { message = "Request not found" });
+                }
+
+                existingRequest.Status = request.Status;
+
+                _dbContext.Entry(existingRequest).State = EntityState.Modified;
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { message = "Request updated successfully", data = existingRequest });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
     }
 }
