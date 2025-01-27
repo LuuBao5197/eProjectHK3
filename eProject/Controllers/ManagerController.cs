@@ -20,8 +20,8 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetAllClass()
         {
             var classes = await _dbContext.Classes
-                .Include(c => c.Staff) 
-                .ThenInclude(s => s.User) 
+                .Include(c => c.Staff)
+                .ThenInclude(s => s.User)
                 .ToListAsync();
 
             if (classes == null || classes.Count == 0)
@@ -46,12 +46,12 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetStudentByClass(int classId)
         {
             var classWithDetails = await _dbContext.Classes
-                .Where(c => c.Id == classId) 
-                .Include(c => c.StudentClasses) 
-                    .ThenInclude(sc => sc.Student) 
-                .Include(c => c.Staff) 
-                    .ThenInclude(s => s.User) 
-                .FirstOrDefaultAsync(); 
+                .Where(c => c.Id == classId)
+                .Include(c => c.StudentClasses)
+                    .ThenInclude(sc => sc.Student)
+                .Include(c => c.Staff)
+                    .ThenInclude(s => s.User)
+                .FirstOrDefaultAsync();
 
             if (classWithDetails == null)
             {
@@ -59,7 +59,7 @@ namespace eProject.Controllers
             }
 
             var students = classWithDetails.StudentClasses
-                .Select(sc => sc.Student) 
+                .Select(sc => sc.Student)
                 .ToList();
 
             if (!students.Any())
@@ -80,7 +80,7 @@ namespace eProject.Controllers
                     s.Id,
                     s.ParentName,
                     s.ParentPhoneNumber
-                }).ToList() 
+                }).ToList()
             };
 
             return Ok(result);
@@ -280,7 +280,8 @@ namespace eProject.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(new { message = "Data is not valid" });
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return BadRequest(new { message = "Data is not valid", errors });
                 }
 
                 if (id != request.Id)
