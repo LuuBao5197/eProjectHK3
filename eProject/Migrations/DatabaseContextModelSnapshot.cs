@@ -352,19 +352,22 @@ namespace eProject.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("MeetingTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("OrganizedId")
-                        .HasColumnType("int");
+                    b.Property<string>("Organized")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OrganizedId");
 
                     b.ToTable("Requests");
                 });
@@ -724,15 +727,6 @@ namespace eProject.Migrations
                     b.Navigation("Artwork");
 
                     b.Navigation("Exhibition");
-                });
-
-            modelBuilder.Entity("Request", b =>
-                {
-                    b.HasOne("Staff", "Organized")
-                        .WithMany()
-                        .HasForeignKey("OrganizedId");
-
-                    b.Navigation("Organized");
                 });
 
             modelBuilder.Entity("Staff", b =>

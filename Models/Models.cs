@@ -366,8 +366,9 @@ public class Request
 {
     public int Id { get; set; }
     public DateTime MeetingTime { get; set; }
-    [RegularExpression("^(Accepted|Approving|Rejected)$")]
-    public string Status { get; set; } = "Approving";
-    public Staff? Organized { get; set; }
+    [RegularExpression("^(Canceled|Preparing|Done)$")]
+    public string Status { get; set; }
+    public string Description { get; set; }
+    public string Organized { get; set; }
 
 }

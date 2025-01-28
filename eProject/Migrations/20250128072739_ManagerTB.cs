@@ -19,22 +19,13 @@ namespace eProject.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     MeetingTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OrganizedId = table.Column<int>(type: "int", nullable: true)
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Organized = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Requests", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Requests_Staff_OrganizedId",
-                        column: x => x.OrganizedId,
-                        principalTable: "Staff",
-                        principalColumn: "Id");
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Requests_OrganizedId",
-                table: "Requests",
-                column: "OrganizedId");
         }
 
         /// <inheritdoc />

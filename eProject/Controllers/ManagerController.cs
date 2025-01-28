@@ -73,17 +73,18 @@ namespace eProject.Controllers
             {
                 ClassName = classWithDetails.Name,
                 SchoolYear = classWithDetails.Year,
-                Name = teacherName,
                 TeacherName = teacherName,
                 Students = students.Select(s => new
                 {
                     s.Id,
+                    UserName = s.User?.Username, 
                     s.ParentName,
                     s.ParentPhoneNumber
                 }).ToList()
             };
 
             return Ok(result);
+
         }
 
 
@@ -262,17 +263,6 @@ namespace eProject.Controllers
             return Ok(requests);
         }
 
-        //Method Create Meeting/Request
-        [HttpPost("CreateRequest")]
-        public async Task<IActionResult> CreateRequest(Request request)
-        {
-            await _dbContext.Requests.AddAsync(request);
-            await _dbContext.SaveChangesAsync();
-            return Ok(request);
-
-        }
-
-        //Method Update Meeting/Request
         [HttpPut("UpdateRequest/{id}")]
         public async Task<IActionResult> UpdateRequest(int id, Request request)
         {
@@ -286,7 +276,7 @@ namespace eProject.Controllers
 
                 if (id != request.Id)
                 {
-                    return NotFound(new { message = "No result about this request" });
+                    return NotFound(new { message = "Request ID mismatch" });
                 }
 
                 var existingRequest = await _dbContext.Requests.FindAsync(id);
@@ -295,12 +285,43 @@ namespace eProject.Controllers
                     return NotFound(new { message = "Request not found" });
                 }
 
-                existingRequest.Status = request.Status;
+                // Kiểm tra trạng thái hợp lệ và cập nhật
+                if (existingRequest.Status == "Preparing" && (request.Status == "Done" || request.Status == "Canceled"))
+                {
+                    existingRequest.Status = request.Status;
+                }
+
+                // Cập nhật dữ liệu còn lại nếu cần
+                existingRequest.MeetingTime = request.MeetingTime;
+                existingRequest.Description = request.Description;
+                existingRequest.Organized = request.Organized;
 
                 _dbContext.Entry(existingRequest).State = EntityState.Modified;
                 await _dbContext.SaveChangesAsync();
 
                 return Ok(new { message = "Request updated successfully", data = existingRequest });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("CreateMeeting")]
+        public async Task<IActionResult> CreateMeeting([FromBody] Request request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return BadRequest(new { message = "Data is not valid", errors });
+                }
+
+                _dbContext.Requests.Add(request);
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { message = "Meeting created successfully", data = request });
             }
             catch (Exception ex)
             {
