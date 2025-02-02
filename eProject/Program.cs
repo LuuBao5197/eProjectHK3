@@ -68,6 +68,7 @@ namespace eProject
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectDB"));
             });
+
             builder.Services.AddCors(otp =>
             {
                 otp.AddPolicy("reactChat", builder =>

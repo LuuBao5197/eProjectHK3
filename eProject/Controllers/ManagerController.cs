@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace eProject.Controllers
 {
@@ -19,8 +20,8 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetAllClass()
         {
             var classes = await _dbContext.Classes
-                .Include(c => c.Staff) 
-                .ThenInclude(s => s.User) 
+                .Include(c => c.Staff)
+                .ThenInclude(s => s.User)
                 .ToListAsync();
 
             if (classes == null || classes.Count == 0)
@@ -45,12 +46,12 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetStudentByClass(int classId)
         {
             var classWithDetails = await _dbContext.Classes
-                .Where(c => c.Id == classId) 
-                .Include(c => c.StudentClasses) 
-                    .ThenInclude(sc => sc.Student) 
-                .Include(c => c.Staff) 
-                    .ThenInclude(s => s.User) 
-                .FirstOrDefaultAsync(); 
+                .Where(c => c.Id == classId)
+                .Include(c => c.StudentClasses)
+                    .ThenInclude(sc => sc.Student)
+                .Include(c => c.Staff)
+                    .ThenInclude(s => s.User)
+                .FirstOrDefaultAsync();
 
             if (classWithDetails == null)
             {
@@ -58,7 +59,7 @@ namespace eProject.Controllers
             }
 
             var students = classWithDetails.StudentClasses
-                .Select(sc => sc.Student) 
+                .Select(sc => sc.Student)
                 .ToList();
 
             if (!students.Any())
@@ -72,17 +73,18 @@ namespace eProject.Controllers
             {
                 ClassName = classWithDetails.Name,
                 SchoolYear = classWithDetails.Year,
-                Name = teacherName,
                 TeacherName = teacherName,
                 Students = students.Select(s => new
                 {
                     s.Id,
+                    UserName = s.User?.Username, 
                     s.ParentName,
                     s.ParentPhoneNumber
-                }).ToList() 
+                }).ToList()
             };
 
             return Ok(result);
+
         }
 
 
@@ -248,5 +250,84 @@ namespace eProject.Controllers
             }
             return Ok(teacher);
         }
+
+        //Method Get Meeting/Request
+        [HttpGet("GetAllRequest")]
+        public async Task<IActionResult> GetAllRequest()
+        {
+            var requests = await _dbContext.Requests.ToListAsync();
+            if (requests == null)
+            {
+                return NotFound("There's No Request");
+            }
+            return Ok(requests);
+        }
+
+        [HttpPut("UpdateRequest/{id}")]
+        public async Task<IActionResult> UpdateRequest(int id, Request request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return BadRequest(new { message = "Data is not valid", errors });
+                }
+
+                if (id != request.Id)
+                {
+                    return NotFound(new { message = "Request ID mismatch" });
+                }
+
+                var existingRequest = await _dbContext.Requests.FindAsync(id);
+                if (existingRequest == null)
+                {
+                    return NotFound(new { message = "Request not found" });
+                }
+
+                // Kiểm tra trạng thái hợp lệ và cập nhật
+                if (existingRequest.Status == "Preparing" && (request.Status == "Done" || request.Status == "Canceled"))
+                {
+                    existingRequest.Status = request.Status;
+                }
+
+                // Cập nhật dữ liệu còn lại nếu cần
+                existingRequest.MeetingTime = request.MeetingTime;
+                existingRequest.Description = request.Description;
+                existingRequest.Organized = request.Organized;
+
+                _dbContext.Entry(existingRequest).State = EntityState.Modified;
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { message = "Request updated successfully", data = existingRequest });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("CreateMeeting")]
+        public async Task<IActionResult> CreateMeeting([FromBody] Request request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return BadRequest(new { message = "Data is not valid", errors });
+                }
+
+                _dbContext.Requests.Add(request);
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { message = "Meeting created successfully", data = request });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
     }
 }

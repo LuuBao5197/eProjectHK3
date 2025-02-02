@@ -367,3 +367,14 @@ public class Reject
     public DateTime ModifiedDate { get; set; }
 
 }
+
+public class Request
+{
+    public int Id { get; set; }
+    public DateTime MeetingTime { get; set; }
+    [RegularExpression("^(Canceled|Preparing|Done)$")]
+    public string Status { get; set; }
+    public string Description { get; set; }
+    public string Organized { get; set; }
+
+}
