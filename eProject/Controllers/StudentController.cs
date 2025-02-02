@@ -23,15 +23,15 @@ namespace eProject.Controllers
         [HttpGet("GetAllContest")]
         public async Task<IActionResult> GetContest()
         {
-            var contests = await _dbContext.Contests.Include(c=>c.Organizer.User)
-                .Where(c=>c.Status== "Published").ToListAsync();
+            var contests = await _dbContext.Contests.Include(c => c.Organizer.User)
+                .Where(c => c.Status == "Published").ToListAsync();
             return Ok(contests);
         }
 
         [HttpGet("GetOneContestById/{id}")]
         public async Task<IActionResult> getOneContestById(int id)
         {
-            var contest = await _dbContext.Contests.Include(c=>c.Organizer.User).FirstOrDefaultAsync(c => c.Id == id);
+            var contest = await _dbContext.Contests.Include(c => c.Organizer.User).FirstOrDefaultAsync(c => c.Id == id);
             return Ok(contest);
         }
 
@@ -144,7 +144,7 @@ namespace eProject.Controllers
                     var filePath = await UploadFile.SaveImage(submissionFolder, fileImage);
                     existingSubmission.FilePath = filePath;
 
-                  
+
                 }
 
                 // Thực hiện lưu các thay đổi vào database
@@ -216,8 +216,8 @@ namespace eProject.Controllers
                 .Include(e => e.Artwork)
                 .Include(e => e.Exhibition.Organizer.User)
                 .Include(e => e.Artwork.Submission.Student)
-                .Include(e=>e.Artwork.Submission.Contest)
-                .Where(e => e.Artwork.Submission.Student.Id == studentId) 
+                .Include(e => e.Artwork.Submission.Contest)
+                .Where(e => e.Artwork.Submission.Student.Id == studentId)
                 .ToListAsync();
 
             return Ok(eas);
@@ -254,6 +254,32 @@ namespace eProject.Controllers
                 return BadRequest(e.Message);
             }
         }
+
+        [HttpGet("GetStudentIdByUserId")]
+        public async Task<IActionResult> GetStudentIdByUserId(int userId)
+        {
+            try
+            {
+                // Sử dụng Include để tải thông tin Student liên kết với User
+                var user = await _dbContext.Users
+                    .Include(u => u.Student)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                // Kiểm tra nếu user hoặc student là null
+                if (user == null || user.Student == null)
+                {
+                    return NotFound("Student not found.");
+                }
+
+                // Trả về studentId
+                return Ok(new { studentId = user.Student.Id });
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
 
     }
 }
