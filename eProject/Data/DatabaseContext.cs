@@ -29,7 +29,8 @@ public class DatabaseContext : DbContext
     public DbSet<Condition> Conditions { get; set; }
 
     public DbSet<Reject> Rejects { get; set; }
-
+    public DbSet<Request> Requests { get; set; }
+    public DbSet<ContestJudge> ContestJudges { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Many-to-many relationships
@@ -50,7 +51,13 @@ public class DatabaseContext : DbContext
 
         modelBuilder.Entity<StaffQualification>()
             .HasKey(sq => new { sq.StaffId, sq.QualificationId });
+
+        modelBuilder.Entity<ContestJudge>()
+            .HasKey(cj=> new {cj.StaffId, cj.ContestId });
         // One-to-one relationships
+        modelBuilder.Entity<Submission>()
+            .HasIndex(c => new { c.StudentId, c.ContestId })
+            .IsUnique();
         modelBuilder.Entity<Student>()
             .HasOne(s => s.User)
             .WithOne(u => u.Student)
@@ -116,6 +123,18 @@ public class DatabaseContext : DbContext
           .HasOne(c => c.Contest)
           .WithMany(c => c.Conditions)
           .HasForeignKey(c => c.ContestId)
+          .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ContestJudge>()
+            .HasOne(cj=>cj.Contest)
+            .WithMany(c=>c.ContestJudge)
+            .HasForeignKey(cj=>cj.ContestId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ContestJudge>()
+          .HasOne(cj => cj.Staff)
+          .WithMany(c => c.ContestJudge)
+          .HasForeignKey(cj => cj.StaffId)
           .OnDelete(DeleteBehavior.Restrict);
 
     }
