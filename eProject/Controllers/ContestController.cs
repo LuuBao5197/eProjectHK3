@@ -14,7 +14,6 @@ namespace eProject.Controllers
         {
             _dbContext = dbContext;
         }
-
         [HttpGet]
         public async Task<IActionResult> GetAllContests()
         {
@@ -35,12 +34,16 @@ namespace eProject.Controllers
                                                OrganizerName = c.Organizer != null && c.Organizer.User != null ? c.Organizer.User.Name : null, // Get organizer's name
                                                c.Status,
                                                c.Thumbnail,
-                                               c.Phase
+                                               c.Phase,
+                                               TotalSubmissions = _dbContext.Submissions.Count(s => s.ContestId == c.Id), // Total submissions for the contest
+                                               PendingSubmissions = _dbContext.Submissions.Count(s => s.ContestId == c.Id && string.IsNullOrEmpty(s.Status)), // Pending submissions
+                                               ReviewedSubmissions = _dbContext.Submissions.Count(s => s.ContestId == c.Id && s.Status == "Reviewed") // Reviewed submissions
                                            })
                                            .ToListAsync();
 
             return Ok(contests);
         }
+
 
 
         [HttpGet("{id}")]
@@ -114,46 +117,5 @@ namespace eProject.Controllers
             return NoContent();
         }
 
-        [HttpGet("GetContestSubmissionStats")]
-        public async Task<IActionResult> GetContestSubmissionStats()
-        {
-            var currentDate = DateTime.Now;
-
-            // Fetch all ongoing contests
-            var ongoingContests = await _dbContext.Contests
-                .Where(c => c.StartDate <= currentDate && c.EndDate >= currentDate)
-                .ToListAsync();
-
-            var result = new List<ContestSubmissionStat>();
-
-            foreach (var contest in ongoingContests)
-            {
-                var submissions = await _dbContext.Submissions
-                    .Where(s => s.ContestId == contest.Id)
-                    .ToListAsync();
-
-                var totalSubmissions = submissions.Count();
-                var pendingSubmissions = submissions.Count(s => string.IsNullOrEmpty(s.Status));
-                var reviewedSubmissions = submissions.Count(s => s.Status == "Reviewed");
-
-                result.Add(new ContestSubmissionStat
-                {
-                    ContestName = contest.Name,
-                    TotalSubmissions = totalSubmissions,
-                    PendingSubmissions = pendingSubmissions,
-                    ReviewedSubmissions = reviewedSubmissions
-                });
-            }
-
-            return Ok(result);
-        }
-    }
-
-    public class ContestSubmissionStat
-    {
-        public string ContestName { get; set; }
-        public int TotalSubmissions { get; set; }
-        public int PendingSubmissions { get; set; }
-        public int ReviewedSubmissions { get; set; }
     }
 }

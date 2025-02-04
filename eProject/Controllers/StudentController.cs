@@ -20,13 +20,13 @@ namespace eProject.Controllers
         }
 
         //method get all contest where status = true
-        [HttpGet("GetAllContest")]
+        /*[HttpGet("GetAllContest")]
         public async Task<IActionResult> GetContest()
         {
             var contests = await _dbContext.Contests.Include(c => c.Organizer.User)
                 .Where(c => c.Status == "Published").ToListAsync();
             return Ok(contests);
-        }
+        }*/
 
         [HttpGet("GetOneContestById/{id}")]
         public async Task<IActionResult> getOneContestById(int id)
