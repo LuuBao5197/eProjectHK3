@@ -202,6 +202,21 @@ namespace eProject.Migrations
                     b.ToTable("Contests");
                 });
 
+            modelBuilder.Entity("ContestJudge", b =>
+                {
+                    b.Property<int>("StaffId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ContestId")
+                        .HasColumnType("int");
+
+                    b.HasKey("StaffId", "ContestId");
+
+                    b.HasIndex("ContestId");
+
+                    b.ToTable("ContestJudges");
+                });
+
             modelBuilder.Entity("Exhibition", b =>
                 {
                     b.Property<int>("Id")
@@ -699,6 +714,25 @@ namespace eProject.Migrations
                     b.Navigation("Organizer");
                 });
 
+            modelBuilder.Entity("ContestJudge", b =>
+                {
+                    b.HasOne("Contest", "Contest")
+                        .WithMany("ContestJudge")
+                        .HasForeignKey("ContestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Staff", "Staff")
+                        .WithMany("ContestJudge")
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contest");
+
+                    b.Navigation("Staff");
+                });
+
             modelBuilder.Entity("Exhibition", b =>
                 {
                     b.HasOne("Staff", "Organizer")
@@ -894,6 +928,8 @@ namespace eProject.Migrations
 
                     b.Navigation("Conditions");
 
+                    b.Navigation("ContestJudge");
+
                     b.Navigation("Submissions");
                 });
 
@@ -915,6 +951,8 @@ namespace eProject.Migrations
             modelBuilder.Entity("Staff", b =>
                 {
                     b.Navigation("Classes");
+
+                    b.Navigation("ContestJudge");
 
                     b.Navigation("OrganizedContests");
 
