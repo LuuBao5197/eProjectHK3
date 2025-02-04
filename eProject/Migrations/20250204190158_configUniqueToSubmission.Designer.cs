@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace eProject.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250203040411_updateTBContestJudgeAndSetUpRelationManyMany")]
-    partial class updateTBContestJudgeAndSetUpRelationManyMany
+    [Migration("20250204190158_configUniqueToSubmission")]
+    partial class configUniqueToSubmission
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -212,6 +212,10 @@ namespace eProject.Migrations
 
                     b.Property<int>("ContestId")
                         .HasColumnType("int");
+
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("StaffId", "ContestId");
 
@@ -558,7 +562,8 @@ namespace eProject.Migrations
 
                     b.HasIndex("ContestId");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("StudentId", "ContestId")
+                        .IsUnique();
 
                     b.ToTable("Submissions");
                 });

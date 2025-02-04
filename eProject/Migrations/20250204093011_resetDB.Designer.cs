@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace eProject.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250128072739_ManagerTB")]
-    partial class ManagerTB
+    [Migration("20250204093011_resetDB")]
+    partial class resetDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -203,6 +203,25 @@ namespace eProject.Migrations
                     b.HasIndex("OrganizedBy");
 
                     b.ToTable("Contests");
+                });
+
+            modelBuilder.Entity("ContestJudge", b =>
+                {
+                    b.Property<int>("StaffId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ContestId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("StaffId", "ContestId");
+
+                    b.HasIndex("ContestId");
+
+                    b.ToTable("ContestJudges");
                 });
 
             modelBuilder.Entity("Exhibition", b =>
@@ -702,6 +721,25 @@ namespace eProject.Migrations
                     b.Navigation("Organizer");
                 });
 
+            modelBuilder.Entity("ContestJudge", b =>
+                {
+                    b.HasOne("Contest", "Contest")
+                        .WithMany("ContestJudge")
+                        .HasForeignKey("ContestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Staff", "Staff")
+                        .WithMany("ContestJudge")
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contest");
+
+                    b.Navigation("Staff");
+                });
+
             modelBuilder.Entity("Exhibition", b =>
                 {
                     b.HasOne("Staff", "Organizer")
@@ -897,6 +935,8 @@ namespace eProject.Migrations
 
                     b.Navigation("Conditions");
 
+                    b.Navigation("ContestJudge");
+
                     b.Navigation("Submissions");
                 });
 
@@ -918,6 +958,8 @@ namespace eProject.Migrations
             modelBuilder.Entity("Staff", b =>
                 {
                     b.Navigation("Classes");
+
+                    b.Navigation("ContestJudge");
 
                     b.Navigation("OrganizedContests");
 

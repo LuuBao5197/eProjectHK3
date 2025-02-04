@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace eProject.Migrations
 {
     /// <inheritdoc />
-    public partial class eProTB : Migration
+    public partial class resetDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -56,6 +56,22 @@ namespace eProject.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Rejects", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Requests",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MeetingTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Organized = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Requests", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -342,6 +358,31 @@ namespace eProject.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ContestJudges",
+                columns: table => new
+                {
+                    StaffId = table.Column<int>(type: "int", nullable: false),
+                    ContestId = table.Column<int>(type: "int", nullable: false),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ContestJudges", x => new { x.StaffId, x.ContestId });
+                    table.ForeignKey(
+                        name: "FK_ContestJudges_Contests_ContestId",
+                        column: x => x.ContestId,
+                        principalTable: "Contests",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContestJudges_Staff_StaffId",
+                        column: x => x.StaffId,
+                        principalTable: "Staff",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Submissions",
                 columns: table => new
                 {
@@ -499,6 +540,11 @@ namespace eProject.Migrations
                 column: "ContestId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ContestJudges_ContestId",
+                table: "ContestJudges",
+                column: "ContestId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Contests_OrganizedBy",
                 table: "Contests",
                 column: "OrganizedBy");
@@ -573,10 +619,16 @@ namespace eProject.Migrations
                 name: "Conditions");
 
             migrationBuilder.DropTable(
+                name: "ContestJudges");
+
+            migrationBuilder.DropTable(
                 name: "ExhibitionArtworks");
 
             migrationBuilder.DropTable(
                 name: "Rejects");
+
+            migrationBuilder.DropTable(
+                name: "Requests");
 
             migrationBuilder.DropTable(
                 name: "StaffQualifications");
