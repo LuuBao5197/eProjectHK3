@@ -210,6 +210,10 @@ namespace eProject.Migrations
                     b.Property<int>("ContestId")
                         .HasColumnType("int");
 
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("StaffId", "ContestId");
 
                     b.HasIndex("ContestId");
@@ -555,7 +559,8 @@ namespace eProject.Migrations
 
                     b.HasIndex("ContestId");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("StudentId", "ContestId")
+                        .IsUnique();
 
                     b.ToTable("Submissions");
                 });

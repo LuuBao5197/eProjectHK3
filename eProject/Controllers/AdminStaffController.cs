@@ -20,15 +20,33 @@ namespace eProject.Controllers
         }
 
         [HttpPost("staff")]
-        public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest request)
+        public async Task<IActionResult> CreateStaff([FromForm] CreateStaffRequest request, IFormFile profileImage)
         {
             if (request == null)
             {
-                return BadRequest("Invalid data.");
+                return BadRequest("Dữ liệu không hợp lệ.");
             }
 
+            // Xử lý tải lên ảnh
+            string imagePath = null;
+            if (profileImage != null && profileImage.Length > 0)
+            {
+                var uploadFolder = Path.Combine("Uploads", "UserAvatar");
+                Directory.CreateDirectory(uploadFolder);
 
-            // Tạo đối tượng User từ thông tin request
+                var fileExtension = Path.GetExtension(profileImage.FileName);
+                var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+                var filePath = Path.Combine(uploadFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await profileImage.CopyToAsync(fileStream);
+                }
+
+                imagePath = $"/Uploads/UserAvatar/{uniqueFileName}";
+            }
+
+            // Tạo đối tượng User
             var user = new User
             {
                 Username = request.Username,
@@ -37,30 +55,31 @@ namespace eProject.Controllers
                 Name = request.Name,
                 Email = request.Email,
                 Phone = request.Phone,
+                Address = request.Address, // Thêm địa chỉ
+                Imagepath = imagePath, // Thêm đường dẫn ảnh
                 JoinDate = request.JoinDate,
                 Dob = request.Dob.ToString("yyyy-MM-dd"),
-                Status = true,  // Assuming new users are active by default
-                IsFirstLogin = true, // Assuming first login for new user
-                Expired = DateTime.UtcNow.AddYears(1) // Set account expiration to 1 year
+               
+                Expired = DateTime.UtcNow.AddYears(1)
             };
 
             // Lưu User vào cơ sở dữ liệu
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
-            // Tạo đối tượng Staff từ thông tin request
+            // Tạo đối tượng Staff
             var staff = new Staff
             {
                 UserId = user.Id,
                 JoinDate = request.JoinDate,
-                IsReviewer = false // Set reviewer as false by default
+                IsReviewer = false
             };
 
             // Lưu Staff vào cơ sở dữ liệu
             _dbContext.Staff.Add(staff);
             await _dbContext.SaveChangesAsync();
 
-            // Gán các mối quan hệ Subject cho Staff (nếu có)
+            // Xử lý các mối quan hệ Subject (nếu có)
             if (request.StaffSubjectIds != null)
             {
                 foreach (var subjectId in request.StaffSubjectIds)
@@ -68,9 +87,8 @@ namespace eProject.Controllers
                     var subjectExists = await _dbContext.Subjects.AnyAsync(s => s.Id == subjectId);
                     if (!subjectExists)
                     {
-                        return BadRequest($"Subject with ID {subjectId} does not exist.");
+                        return BadRequest($"Môn học với ID {subjectId} không tồn tại.");
                     }
-
                     var staffSubject = new StaffSubject
                     {
                         StaffId = staff.Id,
@@ -80,7 +98,7 @@ namespace eProject.Controllers
                 }
             }
 
-            // Gán các mối quan hệ Qualification cho Staff (nếu có)
+            // Xử lý các mối quan hệ Qualification (nếu có)
             if (request.StaffQualificationIds != null)
             {
                 foreach (var qualificationId in request.StaffQualificationIds)
@@ -88,9 +106,8 @@ namespace eProject.Controllers
                     var qualificationExists = await _dbContext.Qualifications.AnyAsync(q => q.Id == qualificationId);
                     if (!qualificationExists)
                     {
-                        return BadRequest($"Qualification with ID {qualificationId} does not exist.");
+                        return BadRequest($"Bằng cấp với ID {qualificationId} không tồn tại.");
                     }
-
                     var staffQualification = new StaffQualification
                     {
                         StaffId = staff.Id,
@@ -107,12 +124,12 @@ namespace eProject.Controllers
             var emailRequest = new EmailRequest
             {
                 ToMail = user.Email,
-                Subject = "Welcome to Our System",
-                HtmlContent = $"Dear {user.Name},<br/><br/>" +
-                              "Your account has been successfully created. Below are your login details:<br/>" +
-                              $"<b>Username:</b> {user.Username}<br/>" +
-                              $"<b>Password:</b> {user.Password}<br/><br/>" +
-                              "Best regards,<br/>The Team"
+                Subject = "Chào mừng đến hệ thống của chúng tôi",
+                HtmlContent = $"Kính chào {user.Name},<br/><br/>" +
+                              "Tài khoản của bạn đã được tạo thành công. Dưới đây là thông tin đăng nhập:<br/>" +
+                              $"<b>Tên đăng nhập:</b> {user.Username}<br/>" +
+                              $"<b>Mật khẩu:</b> {user.Password}<br/><br/>" +
+                              "Trân trọng,<br/>Đội ngũ"
             };
 
             // Gửi email
@@ -122,12 +139,11 @@ namespace eProject.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error sending email: {ex.Message}");
+                return StatusCode(500, $"Lỗi khi gửi email: {ex.Message}");
             }
 
-            return Ok(new { message = "Staff created successfully, email sent", staff = staff });
+            return Ok(new { message = "Tạo nhân viên thành công, email đã được gửi", staff = staff });
         }
-
         [HttpGet("subjects")]
         public async Task<IActionResult> GetSubjects()
         {
