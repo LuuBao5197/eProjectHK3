@@ -122,7 +122,7 @@ namespace eProject.Controllers
             // Tạo OTP ngẫu nhiên
             var otp = new Random().Next(100000, 999999).ToString(); // OTP 6 chữ số
             user.OTP = otp;
-            user.OTPExpired = DateTime.UtcNow.AddMinutes(1);
+            user.OTPExpired = DateTime.UtcNow.AddMinutes(2);
             await _userRepository.UpdateUser(user);
 
             // Gửi OTP qua email
