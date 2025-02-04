@@ -380,6 +380,8 @@ public class ContestJudge
     public int StaffId { get; set; }
     public int ContestId { get; set;}
 
+    [RegularExpression("^(Draft|Pending|Rejected|Approved|Published|Canceled)$")]
+    public string status { get; set; } = "Draft";
     public Contest? Contest { get; set; }
 
     public Staff? Staff { get; set; }

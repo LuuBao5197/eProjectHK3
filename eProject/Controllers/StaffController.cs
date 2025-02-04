@@ -53,7 +53,7 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetAllContest(int page = 1, int pageSize = 10, string? search = null,
             int? staffId = -1, string? status = null, string? phase = null)
         {
-            var query = _dbContext.Contests.AsQueryable();
+            var query = _dbContext.Contests.Include(c=>c.ContestJudge).AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -432,7 +432,7 @@ namespace eProject.Controllers
         {
             var query = _dbContext.Submissions
                 .Where(c => c.ContestId == id)
-                .Include(s => s.SubmissionReviews) // Include để lấy review
+                .Include(s => s.SubmissionReviews) // Include get review
                 .ThenInclude(sr => sr.RatingLevel)
                 .AsQueryable();
 
@@ -517,12 +517,13 @@ namespace eProject.Controllers
         [HttpGet("GetReviewForSubmissionOfStaff")]
         public async Task<IActionResult> GetReviewForSubmissionOfStaff(int submissionID, int staffID)
         {
-            var review = await _dbContext.SubmissionReviews.FirstOrDefaultAsync(sr=>sr.SubmissionId == submissionID && sr.StaffId == staffID );
-            if (review == null) { 
+            var review = await _dbContext.SubmissionReviews.FirstOrDefaultAsync(sr => sr.SubmissionId == submissionID && sr.StaffId == staffID);
+            if (review == null)
+            {
                 return NoContent();
             }
             return Ok(review);
-         
+
         }
 
         [HttpGet("GetRatingLevel")]
@@ -557,7 +558,7 @@ namespace eProject.Controllers
                 if (!ModelState.IsValid) return BadRequest("Data is not valid");
                 _dbContext.SubmissionReviews.Update(submissionReview);
                 await _dbContext.SaveChangesAsync();
-                return Ok(new {submissionReview });
+                return Ok(new { submissionReview });
             }
             catch (Exception)
             {
@@ -775,55 +776,30 @@ namespace eProject.Controllers
         // INSERT MANY RECORD INTO CONTESTJUDGE TABLE
 
         [HttpPost("insertContestJudge")]
-        public async Task<IActionResult> CreateManyContestJudge([FromBody] IEnumerable<ContestJudge> contestJudges)
+        public async Task<IActionResult> CreateManyContestJudge(IEnumerable<ContestJudge> contestJudges)
         {
             try
             {
                 if (contestJudges == null || !contestJudges.Any())
                 {
-                    return BadRequest("List contestjudges is empty.");
+                    return BadRequest("List contest judges is empty."); // More descriptive message
                 }
-
-                // 1️⃣ Kiểm tra duplicate trong request
-                var duplicateInRequest = contestJudges
-                    .GroupBy(j => new { j.ContestId, j.StaffId })
-                    .Where(g => g.Count() > 1)
-                    .Select(g => g.Key)
-                    .ToList();
-
-                if (duplicateInRequest.Any())
+                foreach (var item in contestJudges)
                 {
-                    return BadRequest(new
-                    {
-                        message = "Duplicate entries found in request.",
-                        duplicates = duplicateInRequest
-                    });
+                    ContestJudge JudgeExisting = _dbContext.ContestJudges.FirstOrDefault(cj => cj.Equals(item));
+                    if (JudgeExisting != null) return BadRequest("List contest judges is dupplicate with data in database");
                 }
 
-                // 2️⃣ Tập hợp các key cần kiểm tra
-                var keysToCheck = contestJudges
-                    .Select(j => new { j.ContestId, j.StaffId })
-                    .ToList();
-
-                // 3️⃣ Truy vấn DB để lấy ra các bản ghi trùng
-                var existingContestJudges = await _dbContext.ContestJudges
-                    .Where(j => keysToCheck.Any(k => k.ContestId == j.ContestId && k.StaffId == j.StaffId))
-                    .ToListAsync();
-
-                if (existingContestJudges.Any())
-                {
-                    return BadRequest(new
-                    {
-                        message = "Duplicate entries found in database.",
-                        duplicates = existingContestJudges.Select(j => new { j.ContestId, j.StaffId })
-                    });
-                }
-
-                // 4️⃣ Nếu không có duplicate thì thêm mới
+                // 4️⃣ Add new contest judges
                 await _dbContext.ContestJudges.AddRangeAsync(contestJudges);
                 await _dbContext.SaveChangesAsync();
 
-                return Created("ADD JUDGE FOR CONTEST SUCCESSFULLY", contestJudges);
+                return CreatedAtAction(nameof(CreateManyContestJudge), contestJudges);
+            }
+            catch (DbUpdateException ex)
+            // Catch DbUpdateException for database-related errors
+            {
+                return StatusCode(500, $"Database error: {ex.Message}"); // More specific error message
             }
             catch (Exception ex)
             {
@@ -831,6 +807,150 @@ namespace eProject.Controllers
             }
         }
 
+
+        [HttpPut("updateManyContestJudges")]
+        public async Task<IActionResult> UpdateManyContestJudges(IEnumerable<ContestJudge> contestJudges)
+        {
+            try
+            {
+                if (contestJudges == null || !contestJudges.Any())
+                {
+                    return BadRequest("List contest judges is empty.");
+                }
+                var currentContestID = contestJudges.First().ContestId;
+                var oldContestJudges = await _dbContext.ContestJudges.Where(cj => cj.ContestId == currentContestID).ToListAsync();
+
+                if (oldContestJudges == null || !oldContestJudges.Any())
+                {
+                    return BadRequest("No old data to find");
+                }
+                // Handle delete old data
+                _dbContext.RemoveRange(oldContestJudges);
+                // Handle create new data
+                await _dbContext.AddRangeAsync(contestJudges);
+                await _dbContext.SaveChangesAsync();
+                return Ok("Contest judges updated successfully.");
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, $"Database error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+        [HttpGet("getAllStaff")]
+        public async Task<IActionResult> GetAllStaff()
+        {
+            var staffs = await _dbContext.Staff.Include(s => s.User).ToListAsync();
+            return Ok(staffs);
+        }
+
+        [HttpGet("getAllContestWithJudge")]
+        public async Task<IActionResult> GetAllContestWithJudge(int page = 1, int pageSize = 10, string? search = null, string? status = null)
+        {
+
+            var query = _dbContext.Contests.Include(c => c.ContestJudge!).ThenInclude(cj => cj.Staff).ThenInclude(s => s.User).AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.Name.ToLower().Contains(search.ToLower()));
+            }
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(c => c.ContestJudge!.Any(cj => cj.status.ToLower() == status.ToLower()));
+            }
+
+            var totalItems = await query.CountAsync();
+            var contests = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                contests,
+                totalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                totalItems
+            });
+
+
+
+        }
+        [HttpGet("getDetailContestWithJudge/{ContestID}")]
+        public async Task<IActionResult> GetDetailContestWithJudge(int ContestID)
+        {
+            var result = await _dbContext.Contests.Where(c => c.Id == ContestID).Include(c => c.ContestJudge).ThenInclude(cj => cj.Staff).ThenInclude(s => s.User).ToListAsync();
+            return Ok(result);
+        }
+
+        [HttpPatch("SendJudgeForReview/{contestID}")]
+        public async Task<IActionResult> SendJudgeForReview(int contestID)
+        {
+            var contestJudges = await _dbContext.ContestJudges.Where(cj => cj.ContestId == contestID).Include(cj => cj.Staff).ThenInclude(s => s.User).ToListAsync();
+            if (contestJudges == null || !contestJudges.Any())
+            {
+                return BadRequest("No contestJudges for this contest");
+            }
+            var manager = await _dbContext.Users.FirstOrDefaultAsync(u => u.Role == "Manager");
+            if (manager == null)
+            {
+                return BadRequest("Manager not found");
+            }
+
+            try
+            {
+                foreach (var item in contestJudges)
+                {
+                    item.status = "Pending";
+                }
+                _dbContext.ContestJudges.UpdateRange(contestJudges);
+
+                string emailContent = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Approval Request</title>
+</head>
+<body style='font-family: Arial, sans-serif; background-color: #f4f4f4; paddinKD: 20px;'>
+    <div style='max-width: 600px; margin: 0 auto; background: #ffffff; padding: 20px; 
+                border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);'>
+        <h2 style='color: #333;'>Approval Request Notification</h2>
+        <p>Hello <strong>Manager</strong>,</p>
+        <p>A new request is awaiting your approval. Below are the details:</p>
+
+        <table style='width: 100%; border-collapse: collapse; margin: 20px 0;'>
+          
+            <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Request Type:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>Judge for Contest Draft</td></tr>
+            <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Created Date:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{DateTime.Now}</td></tr>
+        </table>
+
+        <p>Please click the link below to review and approve the request:</p>
+        <p style='text-align: center;'>
+            <a href='https://yourwebsite.com/approve-request?id=123' 
+               style='background: #28a745; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>
+               Review & Approve
+            </a>
+        </p>
+        <p>If you did not initiate this request, please ignore this email.</p>
+        <p>Best regards,<br><strong>Management System</strong></p>
+    </div>
+</body>
+</html>";
+                await _dbContext.SaveChangesAsync();
+                SendEmail(manager.Email, "Review Judge For Contest", emailContent);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
         private void SendEmail(string toEmail, string subject, string body)
         {
