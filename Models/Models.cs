@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+
 public class User
 {
     public int Id { get; set; }
@@ -71,11 +72,14 @@ public class Student
 }
 public class CreateStudentRequest
 {
+   
+
     public string Username { get; set; }
     public string Password { get; set; }
     public string Name { get; set; }
     public string Email { get; set; }
     public string Phone { get; set; }
+    public string Address { get; set; }
     public DateTime Dob { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime EnrollmentDate { get; set; }
@@ -84,6 +88,7 @@ public class CreateStudentRequest
     public ICollection<int>? ClassIds { get; set; }
     public ICollection<int>? SubmissionIds { get; set; }
     public ICollection<int>? AwardIds { get; set; }
+  
 }
 
 public class CreateStaffRequest
@@ -94,6 +99,7 @@ public class CreateStaffRequest
     public string Name { get; set; }
     public string Email { get; set; }
     public string Phone { get; set; }
+    public string Address { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime Dob { get; set; }
 
