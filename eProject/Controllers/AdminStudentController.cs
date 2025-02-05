@@ -333,66 +333,136 @@ namespace eProject.Controllers
 
             return Ok(students);
         }
-        //Cập nhật Student
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateStudent(int id, CreateStudentRequest request)
+        public async Task<IActionResult> UpdateStudent(int id, [FromForm] CreateStudentRequest request, IFormFile profileImage)
         {
-            if (request == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Invalid data.");
+                return BadRequest(ModelState);
             }
 
-            // Tìm Student theo id
-            var student = await _dbContext.Students
-                                          .Include(s => s.StudentClasses)
-                                          .Include(s => s.Submissions)
-                                          .FirstOrDefaultAsync(s => s.Id == id);
-
-            if (student == null)
+            using (var transaction = await _dbContext.Database.BeginTransactionAsync())
             {
-                return NotFound("Student not found.");
+                try
+                {
+                    var student = await _dbContext.Students
+                        .Include(s => s.StudentClasses)
+                        .FirstOrDefaultAsync(s => s.Id == id);
+
+                    if (student == null)
+                    {
+                        return NotFound(new { message = "Student not found" });
+                    }
+
+                    var user = await _dbContext.Users.FindAsync(student.UserId);
+                    if (user == null)
+                    {
+                        return NotFound(new { message = "User not found" });
+                    }
+
+                    // Check if email is being changed and if it already exists
+                    if (user.Email != request.Email)
+                    {
+                        var emailExists = await _dbContext.Users
+                            .AnyAsync(u => u.Email == request.Email && u.Id != user.Id);
+                        if (emailExists)
+                        {
+                            return BadRequest(new { message = "Email already exists." });
+                        }
+                    }
+
+                    // Handle image update
+                    if (profileImage != null && profileImage.Length > 0)
+                    {
+                        var uploadFolder = Path.Combine("Uploads", "UserAvatar");
+                        Directory.CreateDirectory(uploadFolder);
+
+                        // Delete old image if exists
+                        if (!string.IsNullOrEmpty(user.Imagepath))
+                        {
+                            var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), uploadFolder,
+                                Path.GetFileName(user.Imagepath));
+                            if (System.IO.File.Exists(oldImagePath))
+                            {
+                                System.IO.File.Delete(oldImagePath);
+                            }
+                        }
+
+                        // Save new image
+                        var fileExtension = Path.GetExtension(profileImage.FileName);
+                        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+                        var filePath = Path.Combine(uploadFolder, uniqueFileName);
+
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await profileImage.CopyToAsync(fileStream);
+                        }
+
+                        user.Imagepath = $"/Uploads/UserAvatar/{uniqueFileName}";
+                    }
+
+                    // Update user information
+                    user.Username = request.Username;
+                    user.Name = request.Name;
+                    user.Email = request.Email;
+                    user.Phone = request.Phone;
+                    user.Address = request.Address;
+                    user.Dob = request.Dob.ToString("yyyy-MM-dd");
+
+                    // Only update password if provided
+                    if (!string.IsNullOrEmpty(request.Password))
+                    {
+                        user.Password = request.Password;
+                    }
+
+                    _dbContext.Users.Update(user);
+
+                    // Update student information
+                    student.ParentName = request.ParentName;
+                    student.ParentPhoneNumber = request.ParentPhoneNumber;
+                    student.EnrollmentDate = request.EnrollmentDate;
+
+                    // Update class assignments
+                    if (request.ClassIds != null)
+                    {
+                        // Remove existing class assignments
+                        _dbContext.StudentClasses.RemoveRange(student.StudentClasses);
+                        await _dbContext.SaveChangesAsync();
+
+                        // Add new class assignments
+                        student.StudentClasses = request.ClassIds.Select(classId => new StudentClass
+                        {
+                            StudentId = student.Id,
+                            ClassId = classId
+                        }).ToList();
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    // Fetch updated student data with related information
+                    var updatedStudent = await _dbContext.Students
+                        .Include(s => s.User)
+                        .Include(s => s.StudentClasses)
+                        .ThenInclude(sc => sc.Class)
+                        .FirstOrDefaultAsync(s => s.Id == id);
+
+                    return Ok(new
+                    {
+                        message = "Student updated successfully",
+                        student = updatedStudent
+                    });
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return StatusCode(500, new { message = $"An error occurred while updating the student: {ex.Message}" });
+                }
             }
-
-            // Cập nhật thông tin User
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == student.UserId);
-            if (user != null)
-            {
-                user.Username = request.Username;
-                user.Password = request.Password;
-                user.Name = request.Name;
-                user.Email = request.Email;
-                user.Phone = request.Phone;
-                user.Dob = request.Dob.ToString("yyyy-MM-dd");
-                user.JoinDate = request.JoinDate;
-                await _dbContext.SaveChangesAsync();
-            }
-
-            // Cập nhật các mối quan hệ
-            if (request.ClassIds != null)
-            {
-                student.StudentClasses = (ICollection<StudentClass>?)await _dbContext.Classes.Where(c => request.ClassIds.Contains(c.Id))
-                    .ToListAsync();
-            }
-
-            if (request.SubmissionIds != null)
-            {
-                student.Submissions = await _dbContext.Submissions
-                    .Where(s => request.SubmissionIds.Contains(s.Id))
-                    .ToListAsync();
-            }
-
-            /*  if (request.AwardIds != null)
-              {
-                  student.StudentAwards = await _dbContext.StudentAwards
-                      .Where(s => request.AwardIds.Contains(s.Id))
-                      .ToListAsync();
-              }*/
-
-            // Lưu thay đổi vào cơ sở dữ liệu
-            await _dbContext.SaveChangesAsync();
-
-            return Ok(new { message = "Student updated successfully", student = student });
         }
+
+        
+
         // Xóa Student
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudent(int id)
@@ -440,7 +510,34 @@ namespace eProject.Controllers
         }
 
         // Lấy thông tin Student theo ID
+        [HttpGet("get-by-id/{id}")]
+        public async Task<IActionResult> GetStudentById(int id)
+        {
+            var student = await _dbContext.Students
+                .Include(s => s.User)
+                .Include(s => s.StudentClasses)
+                .ThenInclude(sc => sc.Class)
+                .FirstOrDefaultAsync(s => s.Id == id);
 
+            if (student == null)
+            {
+                return NotFound(new { message = "Student not found." });
+            }
+
+            return Ok(student);
+        }
+        [HttpGet("check-email")]
+        public async Task<IActionResult> CheckEmailExists([FromQuery] string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return BadRequest("Email is required.");
+            }
+
+            var emailExists = await _dbContext.Users.AnyAsync(u => u.Email == email);
+
+            return Ok(new { exists = emailExists });
+        }
         [HttpGet("search")]
         public async Task<IActionResult> SearchStudentsByName(string name)
         {

@@ -173,19 +173,12 @@ namespace eProject.Controllers
             return Ok(staffList);
         }
 
-        // Cập nhật thông tin Staff
-        // Xóa Staff
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteStaff(int id)
+        public async Task<IActionResult> LockStaff(int id)
         {
-            // Tìm Staff theo id
+            // Find the Staff member by id
             var staff = await _dbContext.Staff
-                                        .Include(s => s.Classes)
-                                        .Include(s => s.StaffSubjects)
-                                        .Include(s => s.StaffQualifications)
-                                        .Include(s => s.OrganizedContests)
-                                        .Include(s => s.OrganizedExhibitions)
-                                        .Include(s => s.SubmissionReviews)
+                                        .Include(s => s.User)
                                         .FirstOrDefaultAsync(s => s.Id == id);
 
             if (staff == null)
@@ -193,19 +186,153 @@ namespace eProject.Controllers
                 return NotFound("Staff not found.");
             }
 
-            // Xóa Staff từ cơ sở dữ liệu
-            _dbContext.Staff.Remove(staff);
+            // Lock the User account by setting the Status to false (inactive)
+            var user = staff.User;
+            user.Status = false; // Mark the account as inactive
+            _dbContext.Users.Update(user);
 
-            // Xóa User tương ứng
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == staff.UserId);
-            if (user != null)
-            {
-                _dbContext.Users.Remove(user);
-            }
-
+            // Save changes to the database
             await _dbContext.SaveChangesAsync();
 
-            return Ok(new { message = "Staff deleted successfully." });
+            return Ok(new { message = "Staff account has been locked successfully." });
+        }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UnlockStaff(int id)
+        {
+            // Tìm kiếm nhân viên theo id
+            var staff = await _dbContext.Staff
+                                        .Include(s => s.User)
+                                        .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (staff == null)
+            {
+                return NotFound("Staff not found.");
+            }
+
+            // Mở khóa tài khoản của người dùng bằng cách đặt Status thành true (hoạt động)
+            var user = staff.User;
+            user.Status = true; // Đặt tài khoản thành hoạt động
+            _dbContext.Users.Update(user);
+
+            // Lưu thay đổi vào cơ sở dữ liệu
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { message = "Staff account has been unlocked successfully." });
+        }
+
+
+        [HttpPut("staff/{id}")]
+        public async Task<IActionResult> UpdateStaff(int id, [FromForm] CreateStaffRequest request, IFormFile profileImage)
+        {
+            if (request == null)
+            {
+                return BadRequest("Dữ liệu không hợp lệ.");
+            }
+
+            // Tìm nhân viên theo id
+            var staff = await _dbContext.Staff
+                                        .Include(s => s.User)
+                                        .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (staff == null)
+            {
+                return NotFound("Nhân viên không tồn tại.");
+            }
+
+            // Cập nhật thông tin User
+            var user = staff.User;
+            user.Username = request.Username ?? user.Username;
+            user.Password = request.Password ?? user.Password;
+            user.Role = request.Role ?? user.Role;
+            user.Name = request.Name ?? user.Name;
+            user.Email = request.Email ?? user.Email;
+            user.Phone = request.Phone ?? user.Phone;
+            user.Address = request.Address ?? user.Address;
+            user.Dob = request.Dob.ToString("yyyy-MM-dd");
+
+
+
+            
+
+            // Xử lý tải lên ảnh mới (nếu có)
+            string imagePath = user.Imagepath;
+            if (profileImage != null && profileImage.Length > 0)
+            {
+                var uploadFolder = Path.Combine("Uploads", "UserAvatar");
+                Directory.CreateDirectory(uploadFolder);
+
+                var fileExtension = Path.GetExtension(profileImage.FileName);
+                var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+                var filePath = Path.Combine(uploadFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await profileImage.CopyToAsync(fileStream);
+                }
+
+                imagePath = $"/Uploads/UserAvatar/{uniqueFileName}";
+            }
+
+            user.Imagepath = imagePath;
+
+            // Lưu thay đổi thông tin User
+            _dbContext.Users.Update(user);
+
+            // Cập nhật thông tin Staff
+            
+
+            // Cập nhật các mối quan hệ Subject (nếu có)
+            if (request.StaffSubjectIds != null)
+            {
+                // Xóa các mối quan hệ Subject cũ
+                _dbContext.StaffSubjects.RemoveRange(staff.StaffSubjects);
+
+                // Thêm các mối quan hệ Subject mới
+                foreach (var subjectId in request.StaffSubjectIds)
+                {
+                    var subjectExists = await _dbContext.Subjects.AnyAsync(s => s.Id == subjectId);
+                    if (!subjectExists)
+                    {
+                        return BadRequest($"Môn học với ID {subjectId} không tồn tại.");
+                    }
+
+                    var staffSubject = new StaffSubject
+                    {
+                        StaffId = staff.Id,
+                        SubjectId = subjectId
+                    };
+                    _dbContext.StaffSubjects.Add(staffSubject);
+                }
+            }
+
+            // Cập nhật các mối quan hệ Qualification (nếu có)
+            if (request.StaffQualificationIds != null)
+            {
+                // Xóa các mối quan hệ Qualification cũ
+                _dbContext.StaffQualifications.RemoveRange(staff.StaffQualifications);
+
+                // Thêm các mối quan hệ Qualification mới
+                foreach (var qualificationId in request.StaffQualificationIds)
+                {
+                    var qualificationExists = await _dbContext.Qualifications.AnyAsync(q => q.Id == qualificationId);
+                    if (!qualificationExists)
+                    {
+                        return BadRequest($"Bằng cấp với ID {qualificationId} không tồn tại.");
+                    }
+
+                    var staffQualification = new StaffQualification
+                    {
+                        StaffId = staff.Id,
+                        QualificationId = qualificationId
+                    };
+                    _dbContext.StaffQualifications.Add(staffQualification);
+                }
+            }
+
+            // Lưu các thay đổi vào cơ sở dữ liệu
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { message = "Cập nhật nhân viên thành công", staff = staff });
         }
 
         [HttpGet("{id}")]
