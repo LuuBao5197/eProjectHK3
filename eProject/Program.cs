@@ -68,12 +68,12 @@ namespace eProject
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectDB"));
             });
-
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddCors(otp =>
             {
                 otp.AddPolicy("reactChat", builder =>
                 {
-                    builder.WithOrigins("http://localhost:3000")
+                    builder.WithOrigins("http://localhost:5173")
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials();
@@ -81,6 +81,7 @@ namespace eProject
             });
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddHostedService<OtpCleanupService>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -89,11 +90,11 @@ namespace eProject
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            app.UseCors(builder => builder
-           .AllowAnyOrigin()
-           .AllowAnyMethod()
-           .AllowAnyHeader());
-            app.UseAuthorization();
+            /*  app.UseCors(builder => builder
+             .AllowAnyOrigin()
+             .AllowAnyMethod()
+             .AllowAnyHeader());*/
+            app.UseCors("reactChat");
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider
@@ -101,7 +102,9 @@ namespace eProject
                 RequestPath = "/Uploads"
 
             });
-
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapControllers();
 

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -128,6 +127,7 @@ public class Staff
     public ICollection<Contest>? OrganizedContests { get; set; }
     public ICollection<Exhibition>? OrganizedExhibitions { get; set; }
     public ICollection<SubmissionReview>? SubmissionReviews { get; set; }
+    public IEnumerable<ContestJudge>? ContestJudge { get; set; }
 }
 
 public class Qualification
@@ -215,6 +215,8 @@ public class Contest
     public ICollection<Award>? Awards { get; set; }
     public ICollection<Submission>? Submissions { get; set; }
     public ICollection<Condition>? Conditions {  get; set; } 
+
+    public IEnumerable<ContestJudge>? ContestJudge { get; set; }
 }
 
 public class Submission
@@ -378,3 +380,16 @@ public class Request
     public string Organized { get; set; }
 
 }
+
+public class ContestJudge
+{
+    public int StaffId { get; set; }
+    public int ContestId { get; set;}
+
+    [RegularExpression("^(Draft|Pending|Rejected|Approved|Published|Canceled)$")]
+    public string status { get; set; } = "Draft";
+    public Contest? Contest { get; set; }
+
+    public Staff? Staff { get; set; }
+}
+

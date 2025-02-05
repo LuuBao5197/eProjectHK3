@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace eProject.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250112102550_UpdateDB")]
-    partial class UpdateDB
+    [Migration("20250204190158_configUniqueToSubmission")]
+    partial class configUniqueToSubmission
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -76,6 +76,10 @@ namespace eProject.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -153,6 +157,10 @@ namespace eProject.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CancelReason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -197,6 +205,25 @@ namespace eProject.Migrations
                     b.ToTable("Contests");
                 });
 
+            modelBuilder.Entity("ContestJudge", b =>
+                {
+                    b.Property<int>("StaffId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ContestId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("StaffId", "ContestId");
+
+                    b.HasIndex("ContestId");
+
+                    b.ToTable("ContestJudges");
+                });
+
             modelBuilder.Entity("Exhibition", b =>
                 {
                     b.Property<int>("Id")
@@ -204,6 +231,14 @@ namespace eProject.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CancelReason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
@@ -293,6 +328,70 @@ namespace eProject.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("RatingLevels");
+                });
+
+            modelBuilder.Entity("Reject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ReferenceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RefrenceType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("RejectDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RejectReason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RejectedBy")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Rejects");
+                });
+
+            modelBuilder.Entity("Request", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("MeetingTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Organized")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Requests");
                 });
 
             modelBuilder.Entity("Staff", b =>
@@ -450,6 +549,9 @@ namespace eProject.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
 
@@ -460,7 +562,8 @@ namespace eProject.Migrations
 
                     b.HasIndex("ContestId");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("StudentId", "ContestId")
+                        .IsUnique();
 
                     b.ToTable("Submissions");
                 });
@@ -499,6 +602,10 @@ namespace eProject.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Dob")
                         .IsRequired()
@@ -613,6 +720,25 @@ namespace eProject.Migrations
                         .IsRequired();
 
                     b.Navigation("Organizer");
+                });
+
+            modelBuilder.Entity("ContestJudge", b =>
+                {
+                    b.HasOne("Contest", "Contest")
+                        .WithMany("ContestJudge")
+                        .HasForeignKey("ContestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Staff", "Staff")
+                        .WithMany("ContestJudge")
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contest");
+
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Exhibition", b =>
@@ -810,6 +936,8 @@ namespace eProject.Migrations
 
                     b.Navigation("Conditions");
 
+                    b.Navigation("ContestJudge");
+
                     b.Navigation("Submissions");
                 });
 
@@ -831,6 +959,8 @@ namespace eProject.Migrations
             modelBuilder.Entity("Staff", b =>
                 {
                     b.Navigation("Classes");
+
+                    b.Navigation("ContestJudge");
 
                     b.Navigation("OrganizedContests");
 
