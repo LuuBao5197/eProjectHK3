@@ -230,9 +230,13 @@ public class Submission
     public string FilePath { get; set; }
     public string? Status { get; set; }
 
+    // Thêm thuộc tính lưu điểm trung bình
+    public double? AverageRating { get; set; }
+
     public Student? Student { get; set; }
     public Contest? Contest { get; set; }
     public Artwork? Artwork { get; set; }
+
 
     public ICollection<SubmissionReview>? SubmissionReviews { get; set; }
 }
@@ -241,10 +245,14 @@ public class Artwork
 {
     public int Id { get; set; }
     public int SubmissionId { get; set; }
-    public float Price { get; set; }
-    public string? Status { get; set; }
-    public float SellingPrice { get; set; }
-    public string? PaymentStatus { get; set; }
+    public float Price { get; set; } = 100;
+
+    [RegularExpression("^(Available|Sold)$")]
+    public string? Status { get; set; } = "Available";
+    public float? SellingPrice { get; set; }
+
+    [RegularExpression("^(Unpaid|Paid)$")]
+    public string? PaymentStatus { get; set; } = "Unpaid";
     
     public DateTime ExhibitionDate { get; set; }
 
@@ -324,6 +332,9 @@ public class StudentAward
 {
     public int StudentId { get; set; }
     public int AwardId { get; set; }
+
+    [RegularExpression("^(Draft|Pending|Rejected|Approved|Published|Canceled)$")]
+    public string status { get; set; } = "Draft"; 
 
     public Student? Student { get; set; }
     public Award? Award { get; set; }
