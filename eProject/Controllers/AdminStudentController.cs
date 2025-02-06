@@ -333,6 +333,8 @@ namespace eProject.Controllers
 
             return Ok(students);
         }
+       
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStudent(int id, [FromForm] CreateStudentRequest request, IFormFile profileImage)
         {
