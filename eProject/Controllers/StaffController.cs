@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using System.Linq;
 
 namespace eProject.Controllers
 {
@@ -53,7 +54,7 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetAllContest(int page = 1, int pageSize = 10, string? search = null,
             int? staffId = -1, string? status = null, string? phase = null)
         {
-            var query = _dbContext.Contests.Include(c=>c.ContestJudge).AsQueryable();
+            var query = _dbContext.Contests.Include(c => c.ContestJudge).AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -566,12 +567,186 @@ namespace eProject.Controllers
             }
         }
 
+        [HttpGet("ComputeAverageRatingForAllSubmission")]
+        public async Task<IActionResult> ComputeAverageRatingForAllSubmission(int ContestID)
+        {
+            var submissionExisting = await _dbContext.Submissions.Where(s => s.ContestId == ContestID).Include(s => s.SubmissionReviews).ThenInclude(sr => sr.RatingLevel).ToListAsync();
+
+            if (submissionExisting == null) return BadRequest();
+            foreach (var item in submissionExisting)
+            {
+                if (item.SubmissionReviews != null || !item.SubmissionReviews.Any())
+                {
+                    double averageRating = item.SubmissionReviews.Average(sr => sr.RatingLevel.Mark);
+                    item.AverageRating = averageRating;
+                }
+            }
+            _dbContext.Submissions.UpdateRange(submissionExisting);
+            await _dbContext.SaveChangesAsync();
+            return Ok(submissionExisting);
+        }
+        [HttpGet("GetProjectedRanking")]
+        public async Task<IActionResult> GetProjectedRanking(int contestId)
+        {
+            var submissions = await _dbContext.Submissions
+              .Where(s => s.ContestId == contestId)!
+              .Include(s => s.Student).ThenInclude(s => s.User)
+              .Include(s => s.SubmissionReviews)!
+              .ThenInclude(sr => sr.RatingLevel)
+              .Include(s => s.Contest).ThenInclude(c => c.ContestJudge)
+              .ToListAsync();
+
+            if (!submissions.Any()) return BadRequest("No submissions found.");
+
+            // Compute average
+            foreach (var submission in submissions)
+            {
+                if (submission.SubmissionReviews != null && submission.SubmissionReviews.Any())
+                {
+                    submission.AverageRating = submission.SubmissionReviews.Average(sr => sr.RatingLevel.Mark);
+                }
+                else
+                {
+                    submission.AverageRating = 0;
+                }
+            }
+            //Update Submission Table 
+            _dbContext.Submissions.UpdateRange(submissions);
+            await _dbContext.SaveChangesAsync();
+            // Sort submissions by average descending
+            submissions = submissions.OrderByDescending(s => s.AverageRating).ToList();
+            return Ok(submissions);
+
+        }
+
+        [HttpGet("ComputeAndAssignAwards")]
+        public async Task<IActionResult> ComputeAndAssignAwards(int contestId)
+        {
+
+
+            var contestExisting = await _dbContext.Contests.FirstOrDefaultAsync(c => c.Id == contestId);
+            if (contestExisting == null) return BadRequest("No Contest Found");
+            if (DateTime.Now.CompareTo(contestExisting.SubmissionDeadline) < 0)
+            {
+                return BadRequest("You must be compute and assign awards after SubmissionDeadline time");
+            }
+            var studentAwardExisting = await _dbContext.StudentAwards.Include(sa => sa.Award)
+                .ThenInclude(a => a.Contest)
+                .FirstOrDefaultAsync(sa => sa.Award.Contest.Id == contestId);
+
+            if (studentAwardExisting != null) return BadRequest("Contest results already exist ");
+            var submissions = await _dbContext.Submissions
+                .Where(s => s.ContestId == contestId)!
+                .Include(s => s.SubmissionReviews)!
+                .ThenInclude(sr => sr.RatingLevel)
+                 .Include(s => s.Contest).ThenInclude(c => c.ContestJudge)
+                 .Include(s => s.Student).ThenInclude(s=>s.User)
+                .ToListAsync();
+
+            if (!submissions.Any()) return BadRequest("No submissions found.");
+            if (submissions.Any(s => s.SubmissionReviews.Count() < s.Contest.ContestJudge.Count()))
+            {
+                return BadRequest("Not enought to number review required");
+            }
+
+            // Compute average
+            foreach (var submission in submissions)
+            {
+                if (submission.SubmissionReviews != null && submission.SubmissionReviews.Any())
+                {
+                    submission.AverageRating = submission.SubmissionReviews.Average(sr => sr.RatingLevel.Mark);
+                }
+            }
+            //Update Submission Table 
+            _dbContext.Submissions.UpdateRange(submissions);
+
+            // Sort submissions by average descending
+            submissions = submissions.OrderByDescending(s => s.AverageRating).ToList();
+
+
+            // Get List Awards by Contest
+            var awards = await _dbContext.Awards
+                .Where(a => a.ContestId == contestId)
+                .OrderByDescending(a => a.Value)
+                .ToListAsync();
+
+            if (awards == null || !awards.Any()) return BadRequest("No awards found for this contest.");
+
+            // Create List to save awards for Student
+            var studentAwards = new List<StudentAward>();
+            int submissionIndex = 0;
+
+            // Assign award follow by limit quantity of every award
+            foreach (var award in awards)
+            {
+                int count = 0;
+                while (count < award.AwardQuantity && submissionIndex < submissions.Count)
+                {
+                    studentAwards.Add(new StudentAward
+                    {
+                        StudentId = submissions[submissionIndex].StudentId,
+                        AwardId = award.Id,
+                        Student = submissions[submissionIndex].Student,
+                    });
+
+
+                    submissionIndex++; // Xét tiếp bài dự thi tiếp theo
+                    count++; // Đếm số lượng giải đã cấp
+                }
+            }
+
+
+            // Save to StudentAwards Table
+            await _dbContext.StudentAwards.AddRangeAsync(studentAwards);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(studentAwards);
+        }
+
+        [HttpGet("GetStudentAwards")]
+        public async Task<IActionResult> GetStudentAwards(string? search = null, string? status = null)
+        {
+            var query = _dbContext.StudentAwards
+                .Include(sa => sa.Award).ThenInclude(a => a.Contest)
+                .Include(sa => sa.Student).ThenInclude(s => s.User)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(sa => sa.Student.User.Name.ToLower().Contains(search.ToLower())
+                                       || sa.Award.Contest.Name.ToLower().Contains(search.ToLower()));
+            }
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(sa => sa.status.ToLower().Equals(status.ToLower()));
+            }
+
+            var studentAwards = await query
+                .GroupBy(sa => sa.Award.Contest)  // Nhóm theo Contest
+                .Select(group => new
+                {
+                    ContestName = group.Key.Name,
+                    ContestId = group.Key.Id,
+                    Awards = group.Select(sa => new
+                    {
+                        StudentName = sa.Student.User.Name,
+                        StudentId = sa.Student.Id,
+                        AwardName = sa.Award.Name,
+                        Status = sa.status,
+                        AwardId =  sa.Award.Id,
+                        
+                    }).ToList()
+                }).ToListAsync();
+
+            return Ok(studentAwards);
+        }
+
 
         [HttpGet("GetInfoStaff/{id}")]
         public async Task<IActionResult> GetStaffFromUserId(int id)
         {
             var staff = await _dbContext.Staff.FirstOrDefaultAsync(s => s.UserId == id);
-            if (staff == null) return BadRequest("Not fount any Staff ");
+            if (staff == null) return BadRequest("Not found any Staff ");
             return Ok(staff);
         }
 
@@ -950,6 +1125,218 @@ namespace eProject.Controllers
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
+        }
+
+        [HttpPatch("SendStudentAwardForReview/{contestID}")]
+        public async Task<IActionResult> SendStudentAwardForReview(int contestID)
+        {
+            var studentAwards = await _dbContext.StudentAwards
+                .Include(sa=>sa.Award)
+                .ThenInclude(a=>a.Contest)
+                .Include(sa=>sa.Student)
+                .ThenInclude(st=>st.User)
+                .Where(sa=>sa.Award.ContestId == contestID)
+                .ToListAsync();
+            if (studentAwards == null || !studentAwards.Any())
+            {
+                return BadRequest("No studentAwards for this contest");
+            }
+            var manager = await _dbContext.Users.FirstOrDefaultAsync(u => u.Role == "Manager");
+            if (manager == null)
+            {
+                return BadRequest("Manager not found");
+            }
+
+            try
+            {
+                foreach (var item in studentAwards)
+                {
+                    item.status = "Pending";
+                }
+                _dbContext.StudentAwards.UpdateRange(studentAwards);
+
+                string emailContent = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Approval Request</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }}
+        h2 {{
+            color: #333;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }}
+        th, td {{
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }}
+        .btn {{
+            background: #28a745;
+            color: #ffffff;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <h2>Approval Request Notification</h2>
+        <p>Hello <strong>Manager</strong>,</p>
+        <p>A new request is awaiting your approval. Below are the details:</p>
+
+        <table>
+            <tr>
+                <td><strong>Contest Name:</strong></td>
+                <td>{studentAwards.First().Award.Contest.Name}</td>
+            </tr>
+            <tr>
+                <td><strong>Created Date:</strong></td>
+                <td>{DateTime.Now}</td>
+            </tr>
+        </table>
+
+        <h3>List of Awarded Students</h3>
+        <table>
+            <tr>
+                <th>Student Name</th>
+                <th>Award Name</th>
+                <th>Value Award($)</th>
+            </tr>";
+
+                foreach (var award in studentAwards)
+                {
+                    emailContent += $@"
+            <tr>
+                <td>{award.Student.User.Name}</td>
+                <td>{award.Award.Name}</td>
+                <td>{award.Award.Value}</td>
+            </tr>";
+                }
+
+                emailContent += $@"
+        </table>
+
+        <p>Please click the link below to review and approve the request:</p>
+        <p style='text-align: center;'>
+            <a href='https://yourwebsite.com/approve-request?id=123' class='btn'>
+               Review & Approve
+            </a>
+        </p>
+        <p>If you did not initiate this request, please ignore this email.</p>
+        <p>Best regards,<br><strong>Management System</strong></p>
+    </div>
+</body>
+</html>";
+
+                await _dbContext.SaveChangesAsync();
+                SendEmail(manager.Email, "Review StudentAward For Contest", emailContent);
+                return Ok(studentAwards);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("GetSubmissionOfStudentAwards")]
+        public async Task<IActionResult> GetSubmissionOfStudentAwards(string? search = null, string? status = null)
+        {
+            var query = _dbContext.StudentAwards
+                .Include(sa => sa.Award).ThenInclude(a => a.Contest).ThenInclude(c=>c.Submissions)
+                .Include(sa => sa.Student).ThenInclude(s => s.User)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(sa => sa.Student.User.Name.ToLower().Contains(search.ToLower())
+                                       || sa.Award.Contest.Name.ToLower().Contains(search.ToLower()));
+            }
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(sa => sa.status.ToLower().Equals(status.ToLower()));
+            }
+
+            var studentAwards = await query
+                .GroupBy(sa => sa.Award.Contest)  // Nhóm theo Contest
+                .Select(group => new
+                {
+                    ContestName = group.Key.Name,
+                    ContestId = group.Key.Id,
+                    Awards = group.Select(sa => new
+                    {
+                        StudentName = sa.Student.User.Name,
+                        StudentId = sa.Student.Id,
+                        AwardName = sa.Award.Name,
+                        Status = sa.status,
+                        AwardId = sa.Award.Id,
+                        SubmissionId = sa.Award.Contest.Submissions.First(s=>s.StudentId == sa.Student.Id).Id
+
+                    }).ToList()
+                }).ToListAsync();
+
+            return Ok(studentAwards);
+        }
+
+        [HttpPost("CreateManyArtWork")]
+        public async Task<IActionResult> CreateManyArtWork(IEnumerable<Artwork> artworks)
+        {
+            if (artworks == null || !artworks.Any())
+            {
+                return BadRequest(new { message = "Artwork list cannot be empty." });
+            }
+            foreach (var item in artworks)
+            {
+                if(_dbContext.Artworks.FirstOrDefaultAsync(a=>a.SubmissionId == item.SubmissionId) != null)
+                {
+                    return BadRequest("Submission have been available in data");
+                }
+            }
+            foreach (var artwork in artworks)
+            {
+                if (!TryValidateModel(artwork))
+                {
+                    return BadRequest(new { message = "Invalid data.", errors = ModelState });
+                }
+
+                artwork.Status ??= "Available";
+                artwork.PaymentStatus ??= "Unpaid";
+                artwork.ExhibitionDate = DateTime.Now;
+            }
+
+            await _dbContext.Artworks.AddRangeAsync(artworks);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpGet("GetAllArtWork")]
+        public async Task<IActionResult> GetAllArtWork()
+        {
+            var artworks = _dbContext.Artworks.Include(a => a.Submission).ThenInclude(s => s.Student).ThenInclude(st => st.User);
+            return Ok(artworks);
+
         }
 
         private void SendEmail(string toEmail, string subject, string body)
