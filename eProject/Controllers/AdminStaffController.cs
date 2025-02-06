@@ -337,6 +337,34 @@ public async Task<IActionResult> UpdateStaff(int id, [FromForm] CreateStaffReque
     // Lưu thay đổi vào cơ sở dữ liệu
     return Ok(new { message = "Cập nhật nhân viên thành công", staff });
 }
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStaffStatus(int id, [FromBody] UpdateStaffStatusRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Dữ liệu không hợp lệ.");
+            }
+
+            // Tìm kiếm nhân viên theo ID
+            var staff = await _dbContext.Staff
+                                        .Include(s => s.User)
+                                        .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (staff == null)
+            {
+                return NotFound("Nhân viên không tồn tại.");
+            }
+
+            // Cập nhật trạng thái của User
+            var user = staff.User;
+            user.Status = request.Status;
+
+            // Lưu thay đổi vào cơ sở dữ liệu
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { message = "Cập nhật trạng thái nhân viên thành công", staff });
+        }
 
 
     }

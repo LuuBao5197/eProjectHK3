@@ -112,7 +112,10 @@ public class CreateStaffRequest
   
 }
 
-
+public class UpdateStaffStatusRequest
+{
+    public bool Status { get; set; }
+}
 
 public class Staff
 {
