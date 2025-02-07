@@ -308,6 +308,11 @@ public class ExhibitionArtwork
 
     public int ArtworkId { get; set; }
 
+    [RegularExpression("^(Draft|Pending|Rejected|Approved|Published|Canceled)$")]
+
+    public string status { get; set; } = "Draft";
+
+
     public Exhibition? Exhibition { get; set; }
     public Artwork? Artwork { get; set; }
 }
