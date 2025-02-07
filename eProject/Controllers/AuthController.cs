@@ -48,9 +48,10 @@ namespace eProject.Controllers
             {
                 token = tokenString,
                 refreshToken = user.RefreshToken,
-                isFirstLogin = user.IsFirstLogin // Thêm thuộc tính IsFirstLogin
+                isFirstLogin = user.IsFirstLogin,
+                status = user.Status
             });
-        }
+        }!
 
 
         [HttpPost("refresh-token")]
@@ -159,26 +160,26 @@ namespace eProject.Controllers
 
             if (user == null)
             {
-                return NotFound("User not found");
+                return NotFound(new { error = "User not found" });
             }
 
-            // Kiểm tra xem OTP có hết hạn không
-            if (user.OTPExpired == null || user.OTPExpired < DateTime.Now)
+            // Kiểm tra nếu OTP đã hết hạn hoặc không tồn tại
+            if (string.IsNullOrEmpty(user.OTP) || user.OTPExpired == null || user.OTPExpired < DateTime.UtcNow)
             {
-                return BadRequest("OTP has expired. Please request a new one.");
+                return BadRequest(new { error = "OTP has expired or is invalid." });
             }
 
             // Cập nhật mật khẩu mới
             user.Password = request.NewPassword;
 
             // Xóa OTP và ngày hết hạn OTP sau khi cập nhật mật khẩu
-            user.OTP = null; // Đặt OTP thành null để tránh tái sử dụng
-            user.OTPExpired = null; // Đặt ngày hết hạn OTP thành null
+            user.OTP = null;
+            user.OTPExpired = null;
 
             // Lưu lại người dùng với mật khẩu đã được thay đổi
             await _userRepository.UpdateUser(user);
 
-            return Ok("Password has been reset successfully.");
+            return Ok(new { message = "Password has been reset successfully." });
         }
 
 
