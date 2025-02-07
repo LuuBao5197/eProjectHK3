@@ -68,7 +68,7 @@ namespace eProject.Controllers
                         Phone = request.Phone,
                         Address = request.Address,
                         Dob = request.Dob.ToString("yyyy-MM-dd"),
-                        Status = false,
+                        Status = true,
                         JoinDate = request.JoinDate,
                         Expired = DateTime.MaxValue,
                         Imagepath = imagePath // Thêm đường dẫn ảnh

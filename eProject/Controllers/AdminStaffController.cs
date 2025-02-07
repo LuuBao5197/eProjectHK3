@@ -149,12 +149,14 @@ namespace eProject.Controllers
                 ToMail = managerEmail,
                 Subject = "Thông báo về nhân viên mới",
                 HtmlContent = $"Kính chào Quản lý,<br/><br/>" +
-                              $"Một nhân viên mới đã được thêm vào hệ thống với thông tin dưới đây:<br/>" +
-                              $"<b>Tên nhân viên:</b> {user.Name}<br/>" +
-                              $"<b>Tên đăng nhập:</b> {user.Username}<br/>" +
-                              $"<b>Email:</b> {user.Email}<br/><br/>" +
-                              "Trân trọng,<br/>Đội ngũ"
+                  $"Một nhân viên mới đã được thêm vào hệ thống với thông tin dưới đây:<br/>" +
+                  $"<b>Tên nhân viên:</b> {user.Name}<br/>" +
+                  $"<b>Tên đăng nhập:</b> {user.Username}<br/>" +
+                  $"<b>Email:</b> {user.Email}<br/><br/>" +
+                  $"<a href='http://localhost:5173/manager/Inactive-Staff-Status'>Click vào đây để xem chi tiết</a><br/><br/>" +
+                  "Trân trọng,<br/>Đội ngũ"
             };
+
 
             try
             {
