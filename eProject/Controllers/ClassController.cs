@@ -27,6 +27,7 @@ public class ClassController : ControllerBase
         // Lấy thông tin lớp và danh sách học sinh kèm thông tin từ User
         var classEntity = await _context.Classes
             .Include(c => c.StudentClasses)
+            
                 .ThenInclude(sc => sc.Student)
                     .ThenInclude(s => s.User) // Bao gồm thông tin từ bảng User
             .FirstOrDefaultAsync(c => c.Id == id);

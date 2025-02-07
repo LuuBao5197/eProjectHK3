@@ -102,15 +102,20 @@ public class CreateStaffRequest
     public string Address { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime Dob { get; set; }
+    public bool IsReviewer { get; set; }
+
 
     // Các mối quan hệ sẽ là danh sách các đối tượng ID hoặc chi tiết
-  
+
     public ICollection<int>? StaffSubjectIds { get; set; }
     public ICollection<int>? StaffQualificationIds { get; set; }
   
 }
 
-
+public class UpdateStaffStatusRequest
+{
+    public bool Status { get; set; }
+}
 
 public class Staff
 {
@@ -159,6 +164,7 @@ public class Class
 
     public Staff? Staff { get; set; }
     public ICollection<StudentClass>? StudentClasses { get; set; }
+
 }
 
 public class Subject
@@ -271,6 +277,13 @@ public class SubmissionReview
     public Submission? Submission { get; set; }
     public Staff? Staff { get; set; }
     public RatingLevel? RatingLevel { get; set; }
+}
+public class SendEmailToManagerRequest
+{
+    public string ManagerEmail { get; set; }
+    public string StaffName { get; set; }
+    public string Username { get; set; }
+    public string Email { get; set; }
 }
 
 public class Exhibition
