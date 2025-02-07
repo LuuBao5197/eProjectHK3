@@ -90,11 +90,11 @@ namespace eProject
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            /*  app.UseCors(builder => builder
+            app.UseCors(builder => builder
              .AllowAnyOrigin()
              .AllowAnyMethod()
-             .AllowAnyHeader());*/
-            app.UseCors("reactChat");
+             .AllowAnyHeader());
+            //app.UseCors("reactChat");
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider
