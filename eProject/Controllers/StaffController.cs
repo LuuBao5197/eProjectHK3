@@ -1332,11 +1332,259 @@ namespace eProject.Controllers
         }
 
         [HttpGet("GetAllArtWork")]
-        public async Task<IActionResult> GetAllArtWork()
+        public async Task<IActionResult> GetAllArtWork(string? status = null, int? submissionID = -1)
         {
-            var artworks = _dbContext.Artworks.Include(a => a.Submission).ThenInclude(s => s.Student).ThenInclude(st => st.User);
+            var query = _dbContext.Artworks
+                .Include(a => a.Submission)
+                .ThenInclude(s => s.Student)
+                .ThenInclude(st => st.User)
+                .Include(a=>a.ExhibitionArtworks)
+                .ThenInclude(ea=>ea.Exhibition)
+                
+
+                .AsQueryable();
+            if(!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(aw=>aw.Status.ToLower().Equals(status.ToLower()));
+            }
+            if(submissionID > -1) {
+                query = query.Where(aw=>aw.SubmissionId == submissionID);
+            }
+            var artworks = await query.ToListAsync();
             return Ok(artworks);
 
+        }
+
+        [HttpPatch("EditArtWork/{id}")]
+        public async Task<IActionResult> EditArtWork(int id, Artwork updatedArtwork)
+        {
+            if (updatedArtwork == null || id != updatedArtwork.Id)
+            {
+                return BadRequest("Invalid data");
+            }
+
+            try
+            {
+                var existingArtwork = await _dbContext.Artworks.FindAsync(id);
+                if (existingArtwork == null)
+                {
+                    return NotFound("Artwork not found");
+                }
+
+                // Cập nhật thông tin từ request
+                existingArtwork.Price = updatedArtwork.Price;
+                existingArtwork.Status = updatedArtwork.Status;
+                existingArtwork.SellingPrice = updatedArtwork.SellingPrice;
+                existingArtwork.PaymentStatus = updatedArtwork.PaymentStatus;
+                existingArtwork.ExhibitionDate = updatedArtwork.ExhibitionDate;
+                existingArtwork.SubmissionId = updatedArtwork.SubmissionId;
+
+                await _dbContext.SaveChangesAsync();
+                return Ok(new { message = "Artwork updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("AddMultipleExhibitionArtworks")]
+        public async Task<IActionResult> AddMultipleExhibitionArtworks([FromBody] List<ExhibitionArtwork> exhibitionArtworks)
+        {
+            if (exhibitionArtworks == null || exhibitionArtworks.Count == 0)
+            {
+                return BadRequest("No exhibition artworks provided.");
+            }
+
+            try
+            {
+                // Validate if the ExhibitionId exists in the database
+                var exhibitionId = exhibitionArtworks.FirstOrDefault()?.ExhibitionId;
+                if (exhibitionId == null || ! _dbContext.Exhibitions.Any(e => e.Id == exhibitionId))
+                {
+                    return NotFound($"Exhibition with ID {exhibitionId} does not exist.");
+                }
+
+                // Add the exhibition artworks to the context
+                foreach (var artwork in exhibitionArtworks)
+                {
+                    // Assuming ExhibitionId and ArtworkId are required to create the record
+                    _dbContext.ExhibitionArtworks.Add(artwork);
+                }
+
+                // Save changes to the database
+                await _dbContext.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(AddMultipleExhibitionArtworks), new { count = exhibitionArtworks.Count });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPut("UpdateExhibitionArtwork/{exhibitionID}")]
+        public async Task<IActionResult> UpdateExhibitionArtwork(int exhibitionID, List<ExhibitionArtwork> exhibitionArtworks)
+        {
+            var exhibitionArtworkExisting = await _dbContext.ExhibitionArtworks.Where(ea=>ea.ExhibitionId == exhibitionID).ToListAsync();
+            if (exhibitionArtworkExisting == null)
+            {
+                return BadRequest("No data available about Exhibition Artwork");
+            }
+            if (exhibitionArtworkExisting == null)
+            {
+                return BadRequest("No data to send");
+            }
+            _dbContext.RemoveRange(exhibitionArtworkExisting);
+            
+            foreach (var item in exhibitionArtworks)
+            {
+                item.status = "Draft";
+            }
+           await _dbContext.ExhibitionArtworks.AddRangeAsync(exhibitionArtworks);
+            await _dbContext.SaveChangesAsync();
+            return Ok();
+            
+        }
+
+        [HttpGet("GetAllExhibitionArtworks")]
+        public async Task<IActionResult> GetAllExhibitionArtworks(int? exhibitionID = -1)
+        {
+            var query = _dbContext.ExhibitionArtworks.Include(ea => ea.Artwork)
+                .ThenInclude(a => a.Submission)
+                .ThenInclude(s => s.Student).ThenInclude(s => s.User)
+                .Include(ea=>ea.Exhibition)
+                .AsQueryable();
+
+            if(exhibitionID > -1)
+            {
+                query = query.Where(ea=>ea.ExhibitionId == exhibitionID);
+            }
+            var exhibitionArtworks = await query.ToListAsync();
+            return Ok(exhibitionArtworks);
+        }
+
+        [HttpPatch("SendExhibitionArtworkForReview/{exhibitionID}")]
+        public async Task<IActionResult> SendExhibitionArtWorkForReview(int exhibitionID)
+        {
+            var exhibitionArtworks = await _dbContext.ExhibitionArtworks.Include(ea => ea.Artwork)
+                .ThenInclude(a => a.Submission)
+                .ThenInclude(s => s.Student).ThenInclude(s => s.User)
+                .Include(ea => ea.Exhibition)
+                .Where(ea=>ea.ExhibitionId == exhibitionID)
+                .ToListAsync();
+            if (exhibitionArtworks == null || !exhibitionArtworks.Any())
+            {
+                return BadRequest("No artwork for this exhibition");
+            }
+            if (exhibitionArtworks.Any(ex => ex.status == "Pending")) return BadRequest("Some artwork for this exhibition have been send approved");
+            var manager = await _dbContext.Users.FirstOrDefaultAsync(u => u.Role == "Manager");
+            if (manager == null)
+            {
+                return BadRequest("Manager not found");
+            }
+
+            try
+            {
+                foreach (var item in exhibitionArtworks)
+                {
+                    item.status = "Pending";
+                }
+                _dbContext.ExhibitionArtworks.UpdateRange(exhibitionArtworks);
+                string emailContent = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Exhibition Artwork Review</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }}
+        h2 {{
+            color: #333;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }}
+        th, td {{
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }}
+        .btn {{
+            background: #007bff;
+            color: #ffffff;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <h2>Exhibition Artwork Review Request</h2>
+        <p>Hello <strong>Manager</strong>,</p>
+        <p>The following artworks are pending your review for the exhibition <strong>{exhibitionArtworks.First().Exhibition.Name}</strong>:</p>
+
+        <table>
+            <tr>
+                <th>Student Name</th>
+                <th>Artwork Title</th>
+                <th>Submission Date</th>
+            </tr>";
+
+                foreach (var item in exhibitionArtworks)
+                {
+                    emailContent += $@"
+            <tr>
+                <td>{item.Artwork.Submission.Student.User.Name}</td>
+                <td>{item.Artwork.Submission.Name}</td>
+              
+            </tr>";
+                }
+
+                emailContent += $@"
+        </table>
+
+        <p>Please click the link below to review and approve the artworks:</p>
+        <p style='text-align: center;'>
+            <a href='https://yourwebsite.com/exhibition-review?id={exhibitionID}' class='btn'>
+                Review & Approve
+            </a>
+        </p>
+
+        <p>If you did not initiate this request, please ignore this email.</p>
+        <p>Best regards,<br><strong>Exhibition Management System</strong></p>
+    </div>
+</body>
+</html>";
+
+
+
+                await _dbContext.SaveChangesAsync();
+                SendEmail(manager.Email, "Review StudentAward For Contest", emailContent);
+                return Ok(exhibitionArtworks);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         private void SendEmail(string toEmail, string subject, string body)
