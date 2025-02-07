@@ -286,7 +286,7 @@ namespace eProject.Controllers
             }
             if (!string.IsNullOrEmpty(status))
             {
-                query = query.Where(c => c.status.ToLower().Contains(status.ToLower()));
+                query = query.Where(c => c.Status.ToLower().Contains(status.ToLower()));
             }
             if (!string.IsNullOrEmpty(phase))
             {
@@ -718,7 +718,7 @@ namespace eProject.Controllers
             }
             if (!string.IsNullOrEmpty(status))
             {
-                query = query.Where(sa => sa.status.ToLower().Equals(status.ToLower()));
+                query = query.Where(sa => sa.Status.ToLower().Equals(status.ToLower()));
             }
 
             var studentAwards = await query
@@ -732,7 +732,7 @@ namespace eProject.Controllers
                         StudentName = sa.Student.User.Name,
                         StudentId = sa.Student.Id,
                         AwardName = sa.Award.Name,
-                        Status = sa.status,
+                        Status = sa.Status,
                         AwardId =  sa.Award.Id,
                         
                     }).ToList()
@@ -835,7 +835,7 @@ namespace eProject.Controllers
 
             try
             {
-                exhibition.status = "Pending";
+                exhibition.Status = "Pending";
 
                 // Lưu thay đổi
                 _dbContext.Exhibitions.Update(exhibition);
@@ -1151,7 +1151,7 @@ namespace eProject.Controllers
             {
                 foreach (var item in studentAwards)
                 {
-                    item.status = "Pending";
+                    item.Status = "Pending";
                 }
                 _dbContext.StudentAwards.UpdateRange(studentAwards);
 
@@ -1275,7 +1275,7 @@ namespace eProject.Controllers
             }
             if (!string.IsNullOrEmpty(status))
             {
-                query = query.Where(sa => sa.status.ToLower().Equals(status.ToLower()));
+                query = query.Where(sa => sa.Status.ToLower().Equals(status.ToLower()));
             }
 
             var studentAwards = await query
@@ -1289,7 +1289,7 @@ namespace eProject.Controllers
                         StudentName = sa.Student.User.Name,
                         StudentId = sa.Student.Id,
                         AwardName = sa.Award.Name,
-                        Status = sa.status,
+                        Status = sa.Status,
                         AwardId = sa.Award.Id,
                         SubmissionId = sa.Award.Contest.Submissions.First(s=>s.StudentId == sa.Student.Id).Id
 

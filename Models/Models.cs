@@ -287,7 +287,7 @@ public class Exhibition
     //trang thai duyet cua trien lam
     [RegularExpression("^(Draft|Pending|Rejected|Approved|Published|Canceled)$")]
    
-    public string status { get; set; } = "Draft";
+    public string Status { get; set; } = "Draft";
 
     //trang thai tien trinh 
     [RegularExpression("^(Upcoming|Ongoing|Completed)$")]
@@ -334,7 +334,7 @@ public class StudentAward
     public int AwardId { get; set; }
 
     [RegularExpression("^(Draft|Pending|Rejected|Approved|Published|Canceled)$")]
-    public string status { get; set; } = "Draft"; 
+    public string Status { get; set; } = "Draft"; 
 
     public Student? Student { get; set; }
     public Award? Award { get; set; }

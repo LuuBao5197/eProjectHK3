@@ -49,6 +49,7 @@ namespace eProject.Controllers
                 .Where(c => c.Id == classId)
                 .Include(c => c.StudentClasses)
                     .ThenInclude(sc => sc.Student)
+                    .ThenInclude(s => s.User)
                 .Include(c => c.Staff)
                     .ThenInclude(s => s.User)
                 .FirstOrDefaultAsync();
@@ -77,7 +78,8 @@ namespace eProject.Controllers
                 Students = students.Select(s => new
                 {
                     s.Id,
-                    UserName = s.User?.Username, 
+                    UserName = s.User?.Name, 
+                    s.EnrollmentDate,
                     s.ParentName,
                     s.ParentPhoneNumber
                 }).ToList()
@@ -215,7 +217,32 @@ namespace eProject.Controllers
             return Ok(reviewDetail);
         }
 
-        //Method Get all artwork that have been send to exhibition
+        [HttpGet("GetAllStudentAward")]
+        public async Task<IActionResult> GetAllStudentAward()
+        {
+            var studentAwards = await _dbContext.StudentAwards
+                .Include(a => a.Award)
+                .ToListAsync();
+            if (studentAwards == null)
+            {
+                return NotFound("Can't Find Any Student Award");
+            }
+            return Ok(studentAwards);
+        }
+
+        [HttpGet("GetAllArtwork")]
+        public async Task<IActionResult> GetAllArtwork()
+        {
+            var artworks = await _dbContext.Artworks
+                .Include(s => s.Submission)
+                .ToListAsync();
+            if (artworks == null)
+            {
+                return NotFound("There's nothing");
+            }
+            return Ok(artworks);
+        }
+        //Method Get all artwork on display that have been send to exhibition
         [HttpGet("GetAllExhibition")]
         public async Task<IActionResult> GetAllExhibition()
         {
