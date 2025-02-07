@@ -59,7 +59,6 @@ namespace eProject.Controllers
                 Imagepath = imagePath, // Thêm đường dẫn ảnh
                 JoinDate = request.JoinDate,
                 Dob = request.Dob.ToString("yyyy-MM-dd"),
-               
                 Expired = DateTime.UtcNow.AddYears(1)
             };
 
@@ -120,7 +119,7 @@ namespace eProject.Controllers
             // Lưu các thay đổi liên quan đến mối quan hệ
             await _dbContext.SaveChangesAsync();
 
-            // Tạo đối tượng email để gửi
+            // Gửi email chào mừng cho nhân viên
             var emailRequest = new EmailRequest
             {
                 ToMail = user.Email,
@@ -132,18 +131,43 @@ namespace eProject.Controllers
                               "Trân trọng,<br/>Đội ngũ"
             };
 
-            // Gửi email
             try
             {
                 await _emailService.SendMailAsync(emailRequest);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Lỗi khi gửi email: {ex.Message}");
+                return StatusCode(500, $"Lỗi khi gửi email cho nhân viên: {ex.Message}");
+            }
+
+            // Gửi email thông báo đến quản lý
+            // Bạn có thể lấy email của quản lý từ cấu hình hoặc sử dụng email mặc định
+            string managerEmail = "quylakvip1@gmail.com"; // email quản lý mặc định
+
+            var managerEmailRequest = new EmailRequest
+            {
+                ToMail = managerEmail,
+                Subject = "Thông báo về nhân viên mới",
+                HtmlContent = $"Kính chào Quản lý,<br/><br/>" +
+                              $"Một nhân viên mới đã được thêm vào hệ thống với thông tin dưới đây:<br/>" +
+                              $"<b>Tên nhân viên:</b> {user.Name}<br/>" +
+                              $"<b>Tên đăng nhập:</b> {user.Username}<br/>" +
+                              $"<b>Email:</b> {user.Email}<br/><br/>" +
+                              "Trân trọng,<br/>Đội ngũ"
+            };
+
+            try
+            {
+                await _emailService.SendMailAsync(managerEmailRequest);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Lỗi khi gửi email thông báo cho quản lý: {ex.Message}" });
             }
 
             return Ok(new { message = "Tạo nhân viên thành công, email đã được gửi", staff = staff });
         }
+
         [HttpGet("subjects")]
         public async Task<IActionResult> GetSubjects()
         {
@@ -219,44 +243,7 @@ namespace eProject.Controllers
 
             return Ok(new { message = "Staff account has been unlocked successfully." });
         }
-        [HttpPost("send-email-to-manager")]
-        public async Task<IActionResult> SendEmailToManager([FromBody] SendEmailToManagerRequest request)
-        {
-            // Email mặc định của quản lý
-            string defaultManagerEmail = "quylakvip1@gmail.com";
-
-            if (request == null)
-            {
-                return BadRequest("Dữ liệu không hợp lệ.");
-            }
-
-            // Nếu request.ManagerEmail không có, sử dụng email mặc định
-            string managerEmail = string.IsNullOrEmpty(request.ManagerEmail) ? defaultManagerEmail : request.ManagerEmail;
-
-            var emailRequest = new EmailRequest
-            {
-                ToMail = managerEmail,
-                Subject = "Thông báo về nhân viên mới",
-                HtmlContent = $"Kính chào Quản lý,<br/><br/>" +
-                              $"Một nhân viên mới đã được thêm vào hệ thống với thông tin dưới đây:<br/>" +
-                              $"<b>Tên nhân viên:</b> {request.StaffName}<br/>" +
-                              $"<b>Tên đăng nhập:</b> {request.Username}<br/>" +
-                              $"<b>Email:</b> {request.Email}<br/><br/>" +
-                              "Trân trọng,<br/>Đội ngũ"
-            };
-
-            try
-            {
-                await _emailService.SendMailAsync(emailRequest);
-                return Ok(new { message = $"Email đã được gửi đến {managerEmail}." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi khi gửi email: {ex.Message}");
-            }
-        }
-
-
+        
 
 
         [HttpGet("{id}")]
