@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+
 public class User
 {
     public int Id { get; set; }
@@ -71,11 +72,14 @@ public class Student
 }
 public class CreateStudentRequest
 {
+   
+
     public string Username { get; set; }
     public string Password { get; set; }
     public string Name { get; set; }
     public string Email { get; set; }
     public string Phone { get; set; }
+    public string Address { get; set; }
     public DateTime Dob { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime EnrollmentDate { get; set; }
@@ -84,6 +88,7 @@ public class CreateStudentRequest
     public ICollection<int>? ClassIds { get; set; }
     public ICollection<int>? SubmissionIds { get; set; }
     public ICollection<int>? AwardIds { get; set; }
+  
 }
 
 public class CreateStaffRequest
@@ -94,17 +99,23 @@ public class CreateStaffRequest
     public string Name { get; set; }
     public string Email { get; set; }
     public string Phone { get; set; }
+    public string Address { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime Dob { get; set; }
+    public bool IsReviewer { get; set; }
+
 
     // Các mối quan hệ sẽ là danh sách các đối tượng ID hoặc chi tiết
-  
+
     public ICollection<int>? StaffSubjectIds { get; set; }
     public ICollection<int>? StaffQualificationIds { get; set; }
   
 }
 
-
+public class UpdateStaffStatusRequest
+{
+    public bool Status { get; set; }
+}
 
 public class Staff
 {
@@ -153,6 +164,7 @@ public class Class
 
     public Staff? Staff { get; set; }
     public ICollection<StudentClass>? StudentClasses { get; set; }
+
 }
 
 public class Subject
@@ -224,9 +236,13 @@ public class Submission
     public string FilePath { get; set; }
     public string? Status { get; set; }
 
+    // Thêm thuộc tính lưu điểm trung bình
+    public double? AverageRating { get; set; }
+
     public Student? Student { get; set; }
     public Contest? Contest { get; set; }
     public Artwork? Artwork { get; set; }
+
 
     public ICollection<SubmissionReview>? SubmissionReviews { get; set; }
 }
@@ -235,10 +251,14 @@ public class Artwork
 {
     public int Id { get; set; }
     public int SubmissionId { get; set; }
-    public float Price { get; set; }
-    public string? Status { get; set; }
-    public float SellingPrice { get; set; }
-    public string? PaymentStatus { get; set; }
+    public float Price { get; set; } = 100;
+
+    [RegularExpression("^(Available|Sold)$")]
+    public string? Status { get; set; } = "Available";
+    public float? SellingPrice { get; set; }
+
+    [RegularExpression("^(Unpaid|Paid)$")]
+    public string? PaymentStatus { get; set; } = "Unpaid";
     
     public DateTime ExhibitionDate { get; set; }
 
@@ -257,6 +277,13 @@ public class SubmissionReview
     public Submission? Submission { get; set; }
     public Staff? Staff { get; set; }
     public RatingLevel? RatingLevel { get; set; }
+}
+public class SendEmailToManagerRequest
+{
+    public string ManagerEmail { get; set; }
+    public string StaffName { get; set; }
+    public string Username { get; set; }
+    public string Email { get; set; }
 }
 
 public class Exhibition
@@ -294,6 +321,11 @@ public class ExhibitionArtwork
 
     public int ArtworkId { get; set; }
 
+    [RegularExpression("^(Draft|Pending|Rejected|Approved|Published|Canceled)$")]
+
+    public string status { get; set; } = "Draft";
+
+
     public Exhibition? Exhibition { get; set; }
     public Artwork? Artwork { get; set; }
 }
@@ -318,6 +350,9 @@ public class StudentAward
 {
     public int StudentId { get; set; }
     public int AwardId { get; set; }
+
+    [RegularExpression("^(Draft|Pending|Rejected|Approved|Published|Canceled)$")]
+    public string status { get; set; } = "Draft"; 
 
     public Student? Student { get; set; }
     public Award? Award { get; set; }
@@ -380,6 +415,8 @@ public class ContestJudge
     public int StaffId { get; set; }
     public int ContestId { get; set;}
 
+    [RegularExpression("^(Draft|Pending|Rejected|Approved|Published|Canceled)$")]
+    public string status { get; set; } = "Draft";
     public Contest? Contest { get; set; }
 
     public Staff? Staff { get; set; }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace eProject.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250204093011_resetDB")]
+    partial class resetDB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,7 +41,7 @@ namespace eProject.Migrations
                     b.Property<float>("Price")
                         .HasColumnType("real");
 
-                    b.Property<float?>("SellingPrice")
+                    b.Property<float>("SellingPrice")
                         .HasColumnType("real");
 
                     b.Property<string>("Status")
@@ -280,10 +283,6 @@ namespace eProject.Migrations
                     b.Property<int>("ArtworkId")
                         .HasColumnType("int");
 
-                    b.Property<string>("status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("ExhibitionId", "ArtworkId");
 
                     b.HasIndex("ArtworkId");
@@ -488,10 +487,6 @@ namespace eProject.Migrations
                     b.Property<int>("AwardId")
                         .HasColumnType("int");
 
-                    b.Property<string>("status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("StudentId", "AwardId");
 
                     b.HasIndex("AwardId");
@@ -539,9 +534,6 @@ namespace eProject.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<double?>("AverageRating")
-                        .HasColumnType("float");
-
                     b.Property<int>("ContestId")
                         .HasColumnType("int");
 
@@ -570,8 +562,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ContestId");
 
-                    b.HasIndex("StudentId", "ContestId")
-                        .IsUnique();
+                    b.HasIndex("StudentId");
 
                     b.ToTable("Submissions");
                 });

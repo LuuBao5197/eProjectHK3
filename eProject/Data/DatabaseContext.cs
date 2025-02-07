@@ -55,7 +55,9 @@ public class DatabaseContext : DbContext
         modelBuilder.Entity<ContestJudge>()
             .HasKey(cj=> new {cj.StaffId, cj.ContestId });
         // One-to-one relationships
-
+        modelBuilder.Entity<Submission>()
+            .HasIndex(c => new { c.StudentId, c.ContestId })
+            .IsUnique();
         modelBuilder.Entity<Student>()
             .HasOne(s => s.User)
             .WithOne(u => u.Student)

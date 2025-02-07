@@ -68,6 +68,7 @@ namespace eProject
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectDB"));
             });
+
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddCors(otp =>
             {
@@ -102,6 +103,7 @@ namespace eProject
                 RequestPath = "/Uploads"
 
             });
+
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
