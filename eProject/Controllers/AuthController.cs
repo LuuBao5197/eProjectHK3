@@ -48,7 +48,8 @@ namespace eProject.Controllers
             {
                 token = tokenString,
                 refreshToken = user.RefreshToken,
-                isFirstLogin = user.IsFirstLogin // Thêm thuộc tính IsFirstLogin
+                isFirstLogin = user.IsFirstLogin,
+                status = user.Status
             });
         }
 
@@ -159,13 +160,13 @@ namespace eProject.Controllers
 
             if (user == null)
             {
-                return NotFound("User not found");
+                return NotFound(new { error = "User not found" });
             }
 
             // Kiểm tra nếu OTP đã hết hạn hoặc không tồn tại
             if (string.IsNullOrEmpty(user.OTP) || user.OTPExpired == null || user.OTPExpired < DateTime.UtcNow)
             {
-                return BadRequest("OTP has expired or is invalid.");
+                return BadRequest(new { error = "OTP has expired or is invalid." });
             }
 
             // Cập nhật mật khẩu mới
@@ -178,9 +179,8 @@ namespace eProject.Controllers
             // Lưu lại người dùng với mật khẩu đã được thay đổi
             await _userRepository.UpdateUser(user);
 
-            return Ok("Password has been reset successfully.");
+            return Ok(new { message = "Password has been reset successfully." });
         }
-
 
 
 
