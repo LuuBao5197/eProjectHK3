@@ -51,7 +51,7 @@ namespace eProject.Controllers
                 isFirstLogin = user.IsFirstLogin,
                 status = user.Status
             });
-        }
+        }!
 
 
         [HttpPost("refresh-token")]
