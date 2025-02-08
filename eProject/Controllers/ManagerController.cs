@@ -78,7 +78,7 @@ namespace eProject.Controllers
                 Students = students.Select(s => new
                 {
                     s.Id,
-                    UserName = s.User?.Name, 
+                    UserName = s.User?.Name,
                     s.EnrollmentDate,
                     s.ParentName,
                     s.ParentPhoneNumber
@@ -178,12 +178,24 @@ namespace eProject.Controllers
 
         public async Task<IActionResult> GetAwardDetail(int id)
         {
-            var award = await _dbContext.StudentAwards.FindAsync(id);
+            var award = await _dbContext.Awards.FindAsync(id);
             if (award == null)
             {
                 return NotFound("Can't Find This Award");
             }
             return Ok(award);
+        }
+
+        [HttpGet("GetArtworkDetail/{id}")]
+
+        public async Task<IActionResult> GetArtworkDetail(int id)
+        {
+            var artwork = await _dbContext.Artworks.FindAsync(id);
+            if (artwork == null)
+            {
+                return NotFound("Can't Find This Artwork");
+            }
+            return Ok(artwork);
         }
 
         //Method Get All Submissions
@@ -228,6 +240,16 @@ namespace eProject.Controllers
                 return NotFound("Can't Find Any Student Award");
             }
             return Ok(studentAwards);
+        }
+        [HttpGet("GetAllUser")]
+        public async Task<IActionResult> GetAllUser()
+        {
+            var users = await _dbContext.Users.ToListAsync();
+            if (users == null)
+            {
+                return NotFound("Can't Find Any User");
+            }
+            return Ok(users);
         }
 
         [HttpGet("GetAllArtwork")]
@@ -355,6 +377,67 @@ namespace eProject.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
             }
         }
+        [HttpPut("UpdateAwardStatus/{id}")]
+        public async Task<IActionResult> UpdateAwardStatus(int id, [FromBody] Award request)
+        {
+            if (request == null || (request.Status != "Approved" && request.Status != "Rejected"))
+            {
+                return BadRequest("Trạng thái không hợp lệ.");
+            }
 
+            var award = await _dbContext.Awards.FindAsync(id);
+            if (award == null)
+            {
+                return NotFound("Giải thưởng không tồn tại.");
+            }
+
+            award.Status = request.Status;
+            _dbContext.Awards.Update(award);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("UpdateContestStatus/{id}")]
+        public async Task<IActionResult> UpdateContestStatus(int id, [FromBody] Contest request)
+        {
+            if (request == null || (request.Status != "Approved" && request.Status != "Rejected"))
+            {
+                return BadRequest("Trạng thái không hợp lệ.");
+            }
+
+            var contest = await _dbContext.Contests.FindAsync(id);
+            if (contest == null)
+            {
+                return NotFound("Giải thưởng không tồn tại.");
+            }
+
+            contest.Status = request.Status;
+            _dbContext.Contests.Update(contest);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("UpdateArtworkStatus/{id}")]
+        public async Task<IActionResult> UpdateArtworkStatus(int id, [FromBody] Artwork request)
+        {
+            if (request == null || (request.Status != "Approved" && request.Status != "Rejected"))
+            {
+                return BadRequest("Trạng thái không hợp lệ.");
+            }
+
+            var artwork = await _dbContext.Artworks.FindAsync(id);
+            if (artwork == null)
+            {
+                return NotFound("Giải thưởng không tồn tại.");
+            }
+
+            artwork.Status = request.Status;
+            _dbContext.Artworks.Update(artwork);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }

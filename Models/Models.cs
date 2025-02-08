@@ -57,6 +57,11 @@ public class UserAuth
     public string Email { get; set; }
     public string Password { get; set; }
 }
+
+public class UpdateAwardStatusRequest
+{
+    public string Status { get; set; } 
+}
 public class Student
 {
     public int Id { get; set; }
