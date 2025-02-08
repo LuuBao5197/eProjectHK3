@@ -52,7 +52,7 @@ namespace eProject.Migrations
                     b.HasIndex("SubmissionId")
                         .IsUnique();
 
-                    b.ToTable("Artworks");
+                    b.ToTable("Artworks", (string)null);
                 });
 
             modelBuilder.Entity("Award", b =>
@@ -87,7 +87,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ContestId");
 
-                    b.ToTable("Awards");
+                    b.ToTable("Awards", (string)null);
                 });
 
             modelBuilder.Entity("Class", b =>
@@ -115,7 +115,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("StaffId");
 
-                    b.ToTable("Classes");
+                    b.ToTable("Classes", (string)null);
                 });
 
             modelBuilder.Entity("Condition", b =>
@@ -143,7 +143,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ContestId");
 
-                    b.ToTable("Conditions");
+                    b.ToTable("Conditions", (string)null);
                 });
 
             modelBuilder.Entity("Contest", b =>
@@ -199,7 +199,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("OrganizedBy");
 
-                    b.ToTable("Contests");
+                    b.ToTable("Contests", (string)null);
                 });
 
             modelBuilder.Entity("ContestJudge", b =>
@@ -218,7 +218,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ContestId");
 
-                    b.ToTable("ContestJudges");
+                    b.ToTable("ContestJudges", (string)null);
                 });
 
             modelBuilder.Entity("Exhibition", b =>
@@ -269,7 +269,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("OrganizedBy");
 
-                    b.ToTable("Exhibitions");
+                    b.ToTable("Exhibitions", (string)null);
                 });
 
             modelBuilder.Entity("ExhibitionArtwork", b =>
@@ -288,7 +288,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ArtworkId");
 
-                    b.ToTable("ExhibitionArtworks");
+                    b.ToTable("ExhibitionArtworks", (string)null);
                 });
 
             modelBuilder.Entity("Qualification", b =>
@@ -308,7 +308,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Qualifications");
+                    b.ToTable("Qualifications", (string)null);
                 });
 
             modelBuilder.Entity("RatingLevel", b =>
@@ -328,7 +328,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RatingLevels");
+                    b.ToTable("RatingLevels", (string)null);
                 });
 
             modelBuilder.Entity("Reject", b =>
@@ -364,7 +364,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Rejects");
+                    b.ToTable("Rejects", (string)null);
                 });
 
             modelBuilder.Entity("Request", b =>
@@ -392,7 +392,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Requests");
+                    b.ToTable("Requests", (string)null);
                 });
 
             modelBuilder.Entity("Staff", b =>
@@ -417,7 +417,7 @@ namespace eProject.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Staff");
+                    b.ToTable("Staff", (string)null);
                 });
 
             modelBuilder.Entity("StaffQualification", b =>
@@ -432,7 +432,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("QualificationId");
 
-                    b.ToTable("StaffQualifications");
+                    b.ToTable("StaffQualifications", (string)null);
                 });
 
             modelBuilder.Entity("StaffSubject", b =>
@@ -447,7 +447,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("StaffSubjects");
+                    b.ToTable("StaffSubjects", (string)null);
                 });
 
             modelBuilder.Entity("Student", b =>
@@ -477,7 +477,7 @@ namespace eProject.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("StudentAward", b =>
@@ -496,7 +496,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("AwardId");
 
-                    b.ToTable("StudentAwards");
+                    b.ToTable("StudentAwards", (string)null);
                 });
 
             modelBuilder.Entity("StudentClass", b =>
@@ -511,7 +511,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ClassId");
 
-                    b.ToTable("StudentClasses");
+                    b.ToTable("StudentClasses", (string)null);
                 });
 
             modelBuilder.Entity("Subject", b =>
@@ -528,7 +528,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subjects");
+                    b.ToTable("Subjects", (string)null);
                 });
 
             modelBuilder.Entity("Submission", b =>
@@ -573,7 +573,7 @@ namespace eProject.Migrations
                     b.HasIndex("StudentId", "ContestId")
                         .IsUnique();
 
-                    b.ToTable("Submissions");
+                    b.ToTable("Submissions", (string)null);
                 });
 
             modelBuilder.Entity("SubmissionReview", b =>
@@ -600,7 +600,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("StaffId");
 
-                    b.ToTable("SubmissionReviews");
+                    b.ToTable("SubmissionReviews", (string)null);
                 });
 
             modelBuilder.Entity("User", b =>
@@ -672,7 +672,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Artwork", b =>

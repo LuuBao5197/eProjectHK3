@@ -229,6 +229,23 @@ namespace eProject.Controllers
             return Ok(reviewDetail);
         }
 
+        //Method Get Student Award Detail
+        [HttpGet("GetStudentAwardDetail/{studentId}/{awardId}")]
+        public async Task<IActionResult> GetStudentAwardDetail(int studentId, int awardId)
+        {
+            var studentAward = await _dbContext.StudentAwards
+                .FirstOrDefaultAsync(sa => sa.StudentId == studentId && sa.AwardId == awardId);
+
+            if (studentAward == null)
+            {
+                return NotFound("Can't Find This Student Award");
+            }
+
+            return Ok(studentAward);
+        }
+
+
+        //Method Get All Student Award
         [HttpGet("GetAllStudentAward")]
         public async Task<IActionResult> GetAllStudentAward()
         {
