@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace eProject.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250207091808_AddAverageRatingToSubmission")]
+    partial class AddAverageRatingToSubmission
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -52,7 +55,7 @@ namespace eProject.Migrations
                     b.HasIndex("SubmissionId")
                         .IsUnique();
 
-                    b.ToTable("Artworks", (string)null);
+                    b.ToTable("Artworks");
                 });
 
             modelBuilder.Entity("Award", b =>
@@ -87,7 +90,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ContestId");
 
-                    b.ToTable("Awards", (string)null);
+                    b.ToTable("Awards");
                 });
 
             modelBuilder.Entity("Class", b =>
@@ -115,7 +118,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("StaffId");
 
-                    b.ToTable("Classes", (string)null);
+                    b.ToTable("Classes");
                 });
 
             modelBuilder.Entity("Condition", b =>
@@ -143,7 +146,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ContestId");
 
-                    b.ToTable("Conditions", (string)null);
+                    b.ToTable("Conditions");
                 });
 
             modelBuilder.Entity("Contest", b =>
@@ -199,7 +202,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("OrganizedBy");
 
-                    b.ToTable("Contests", (string)null);
+                    b.ToTable("Contests");
                 });
 
             modelBuilder.Entity("ContestJudge", b =>
@@ -218,7 +221,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ContestId");
 
-                    b.ToTable("ContestJudges", (string)null);
+                    b.ToTable("ContestJudges");
                 });
 
             modelBuilder.Entity("Exhibition", b =>
@@ -269,7 +272,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("OrganizedBy");
 
-                    b.ToTable("Exhibitions", (string)null);
+                    b.ToTable("Exhibitions");
                 });
 
             modelBuilder.Entity("ExhibitionArtwork", b =>
@@ -288,7 +291,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ArtworkId");
 
-                    b.ToTable("ExhibitionArtworks", (string)null);
+                    b.ToTable("ExhibitionArtworks");
                 });
 
             modelBuilder.Entity("Qualification", b =>
@@ -308,7 +311,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Qualifications", (string)null);
+                    b.ToTable("Qualifications");
                 });
 
             modelBuilder.Entity("RatingLevel", b =>
@@ -328,7 +331,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RatingLevels", (string)null);
+                    b.ToTable("RatingLevels");
                 });
 
             modelBuilder.Entity("Reject", b =>
@@ -364,7 +367,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Rejects", (string)null);
+                    b.ToTable("Rejects");
                 });
 
             modelBuilder.Entity("Request", b =>
@@ -392,7 +395,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Requests", (string)null);
+                    b.ToTable("Requests");
                 });
 
             modelBuilder.Entity("Staff", b =>
@@ -417,7 +420,7 @@ namespace eProject.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Staff", (string)null);
+                    b.ToTable("Staff");
                 });
 
             modelBuilder.Entity("StaffQualification", b =>
@@ -432,7 +435,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("QualificationId");
 
-                    b.ToTable("StaffQualifications", (string)null);
+                    b.ToTable("StaffQualifications");
                 });
 
             modelBuilder.Entity("StaffSubject", b =>
@@ -447,7 +450,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("StaffSubjects", (string)null);
+                    b.ToTable("StaffSubjects");
                 });
 
             modelBuilder.Entity("Student", b =>
@@ -477,7 +480,7 @@ namespace eProject.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Students", (string)null);
+                    b.ToTable("Students");
                 });
 
             modelBuilder.Entity("StudentAward", b =>
@@ -496,7 +499,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("AwardId");
 
-                    b.ToTable("StudentAwards", (string)null);
+                    b.ToTable("StudentAwards");
                 });
 
             modelBuilder.Entity("StudentClass", b =>
@@ -511,7 +514,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("ClassId");
 
-                    b.ToTable("StudentClasses", (string)null);
+                    b.ToTable("StudentClasses");
                 });
 
             modelBuilder.Entity("Subject", b =>
@@ -528,7 +531,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subjects", (string)null);
+                    b.ToTable("Subjects");
                 });
 
             modelBuilder.Entity("Submission", b =>
@@ -573,7 +576,7 @@ namespace eProject.Migrations
                     b.HasIndex("StudentId", "ContestId")
                         .IsUnique();
 
-                    b.ToTable("Submissions", (string)null);
+                    b.ToTable("Submissions");
                 });
 
             modelBuilder.Entity("SubmissionReview", b =>
@@ -600,7 +603,7 @@ namespace eProject.Migrations
 
                     b.HasIndex("StaffId");
 
-                    b.ToTable("SubmissionReviews", (string)null);
+                    b.ToTable("SubmissionReviews");
                 });
 
             modelBuilder.Entity("User", b =>
@@ -672,7 +675,7 @@ namespace eProject.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Artwork", b =>

@@ -22,7 +22,7 @@ namespace eProject.Controllers
             var exhibitions = await _dbContext.Exhibitions
                 .Include(e => e.Organizer) // Tải kèm thông tin người tổ chức
                 .ThenInclude(s => s.User) // Tải kèm thông tin User của người tổ chức
-                .Where(e => e.status == "Published") // Chỉ lấy các exhibition có trạng thái Published
+                .Where(e => e.Status == "Published") // Chỉ lấy các exhibition có trạng thái Published
                 .Select(e => new
                 {
                     e.Id,

@@ -49,6 +49,7 @@ namespace eProject.Controllers
                 .Where(c => c.Id == classId)
                 .Include(c => c.StudentClasses)
                     .ThenInclude(sc => sc.Student)
+                    .ThenInclude(s => s.User)
                 .Include(c => c.Staff)
                     .ThenInclude(s => s.User)
                 .FirstOrDefaultAsync();
@@ -77,7 +78,8 @@ namespace eProject.Controllers
                 Students = students.Select(s => new
                 {
                     s.Id,
-                    UserName = s.User?.Username, 
+                    UserName = s.User?.Name,
+                    s.EnrollmentDate,
                     s.ParentName,
                     s.ParentPhoneNumber
                 }).ToList()
@@ -176,12 +178,24 @@ namespace eProject.Controllers
 
         public async Task<IActionResult> GetAwardDetail(int id)
         {
-            var award = await _dbContext.StudentAwards.FindAsync(id);
+            var award = await _dbContext.Awards.FindAsync(id);
             if (award == null)
             {
                 return NotFound("Can't Find This Award");
             }
             return Ok(award);
+        }
+
+        [HttpGet("GetArtworkDetail/{id}")]
+
+        public async Task<IActionResult> GetArtworkDetail(int id)
+        {
+            var artwork = await _dbContext.Artworks.FindAsync(id);
+            if (artwork == null)
+            {
+                return NotFound("Can't Find This Artwork");
+            }
+            return Ok(artwork);
         }
 
         //Method Get All Submissions
@@ -215,7 +229,59 @@ namespace eProject.Controllers
             return Ok(reviewDetail);
         }
 
-        //Method Get all artwork that have been send to exhibition
+        //Method Get Student Award Detail
+        [HttpGet("GetStudentAwardDetail/{studentId}/{awardId}")]
+        public async Task<IActionResult> GetStudentAwardDetail(int studentId, int awardId)
+        {
+            var studentAward = await _dbContext.StudentAwards
+                .FirstOrDefaultAsync(sa => sa.StudentId == studentId && sa.AwardId == awardId);
+
+            if (studentAward == null)
+            {
+                return NotFound("Can't Find This Student Award");
+            }
+
+            return Ok(studentAward);
+        }
+
+
+        //Method Get All Student Award
+        [HttpGet("GetAllStudentAward")]
+        public async Task<IActionResult> GetAllStudentAward()
+        {
+            var studentAwards = await _dbContext.StudentAwards
+                .Include(a => a.Award)
+                .ToListAsync();
+            if (studentAwards == null)
+            {
+                return NotFound("Can't Find Any Student Award");
+            }
+            return Ok(studentAwards);
+        }
+        [HttpGet("GetAllUser")]
+        public async Task<IActionResult> GetAllUser()
+        {
+            var users = await _dbContext.Users.ToListAsync();
+            if (users == null)
+            {
+                return NotFound("Can't Find Any User");
+            }
+            return Ok(users);
+        }
+
+        [HttpGet("GetAllArtwork")]
+        public async Task<IActionResult> GetAllArtwork()
+        {
+            var artworks = await _dbContext.Artworks
+                .Include(s => s.Submission)
+                .ToListAsync();
+            if (artworks == null)
+            {
+                return NotFound("There's nothing");
+            }
+            return Ok(artworks);
+        }
+        //Method Get all artwork on display that have been send to exhibition
         [HttpGet("GetAllExhibition")]
         public async Task<IActionResult> GetAllExhibition()
         {
@@ -328,6 +394,67 @@ namespace eProject.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
             }
         }
+        [HttpPut("UpdateAwardStatus/{id}")]
+        public async Task<IActionResult> UpdateAwardStatus(int id, [FromBody] Award request)
+        {
+            if (request == null || (request.Status != "Approved" && request.Status != "Rejected"))
+            {
+                return BadRequest("Trạng thái không hợp lệ.");
+            }
 
+            var award = await _dbContext.Awards.FindAsync(id);
+            if (award == null)
+            {
+                return NotFound("Giải thưởng không tồn tại.");
+            }
+
+            award.Status = request.Status;
+            _dbContext.Awards.Update(award);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("UpdateContestStatus/{id}")]
+        public async Task<IActionResult> UpdateContestStatus(int id, [FromBody] Contest request)
+        {
+            if (request == null || (request.Status != "Approved" && request.Status != "Rejected"))
+            {
+                return BadRequest("Trạng thái không hợp lệ.");
+            }
+
+            var contest = await _dbContext.Contests.FindAsync(id);
+            if (contest == null)
+            {
+                return NotFound("Giải thưởng không tồn tại.");
+            }
+
+            contest.Status = request.Status;
+            _dbContext.Contests.Update(contest);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("UpdateArtworkStatus/{id}")]
+        public async Task<IActionResult> UpdateArtworkStatus(int id, [FromBody] Artwork request)
+        {
+            if (request == null || (request.Status != "Approved" && request.Status != "Rejected"))
+            {
+                return BadRequest("Trạng thái không hợp lệ.");
+            }
+
+            var artwork = await _dbContext.Artworks.FindAsync(id);
+            if (artwork == null)
+            {
+                return NotFound("Giải thưởng không tồn tại.");
+            }
+
+            artwork.Status = request.Status;
+            _dbContext.Artworks.Update(artwork);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }

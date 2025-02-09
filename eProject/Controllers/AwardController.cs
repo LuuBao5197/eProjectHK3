@@ -12,7 +12,7 @@ public class AwardController : ControllerBase
         _dbContext = dbContext;
     }
 
-    [HttpGet("GetStudentsWithAwards")]
+    /*[HttpGet("GetStudentsWithAwards")]
     public IActionResult GetStudentsWithAwards()
     {
         // Lấy danh sách giải thưởng của sinh viên, bỏ lọc theo ngày
@@ -31,5 +31,5 @@ public class AwardController : ControllerBase
             .ToList();
 
         return Ok(result);
-    }
+    }*/
 }
