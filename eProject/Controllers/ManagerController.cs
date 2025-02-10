@@ -436,22 +436,140 @@ namespace eProject.Controllers
             return NoContent();
         }
 
-        [HttpPut("UpdateArtworkStatus/{id}")]
-        public async Task<IActionResult> UpdateArtworkStatus(int id, [FromBody] Artwork request)
+        [HttpPut("UpdateExhibitionStatus/{id}")]
+        public async Task<IActionResult> UpdateExhibitionStatus(int id, [FromBody] Exhibition request)
         {
             if (request == null || (request.Status != "Approved" && request.Status != "Rejected"))
             {
                 return BadRequest("Trạng thái không hợp lệ.");
             }
 
-            var artwork = await _dbContext.Artworks.FindAsync(id);
-            if (artwork == null)
+            var exhibition = await _dbContext.Exhibitions.FindAsync(id);
+            if (exhibition == null)
             {
                 return NotFound("Giải thưởng không tồn tại.");
             }
 
-            artwork.Status = request.Status;
-            _dbContext.Artworks.Update(artwork);
+            exhibition.Status = request.Status;
+            _dbContext.Exhibitions.Update(exhibition);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("UpdateStudentAwardStatus/{studentId}/{awardId}")]
+        public async Task<IActionResult> UpdateStudentAwardStatus([FromBody] StudentAward request, int studentId, int awardId)
+        {
+            if (request == null || (request.Status != "Approved" && request.Status != "Rejected"))
+            {
+                return BadRequest("Trạng thái không hợp lệ.");
+            }
+
+            var studentAward = await _dbContext.StudentAwards
+                                               .FirstOrDefaultAsync(sa => sa.StudentId == studentId && sa.AwardId == awardId);
+            if (studentAward == null)
+            {
+                return NotFound("Giải thưởng không tồn tại.");
+            }
+
+            studentAward.Status = request.Status;
+            _dbContext.StudentAwards.Update(studentAward);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpGet("GetAllExhibitionArtwork")]
+        public async Task<IActionResult> GetAllExhibitionArtwork()
+        {
+            var exhibitionArtworks = await _dbContext.ExhibitionArtworks
+                .Include(ea => ea.Exhibition)
+                .Include(ea => ea.Artwork)
+                .ToListAsync();
+            if (exhibitionArtworks == null)
+            {
+                return NotFound("There's nothing");
+            }
+            return Ok(exhibitionArtworks);
+        }
+
+        [HttpGet("GetExhibitionArtworkDetail/{ExhibitionId}/{ArtworkId}")]
+        public async Task<IActionResult> GetExhibitionArtworkDetail(int ExhibitionId, int ArtworkId)
+        {
+            var exhibitionArtwork = await _dbContext.ExhibitionArtworks
+                .FirstOrDefaultAsync(ea => ea.ExhibitionId == ExhibitionId && ea.ArtworkId == ArtworkId);
+            if (exhibitionArtwork == null)
+            {
+                return NotFound("Can't Find This Exhibition Artwork");
+            }
+            return Ok(exhibitionArtwork);
+        }
+
+        [HttpPut("UpdateExhibitionArtworkStatus/{ExhibitionId}/{ArtworkId}")]
+        public async Task<IActionResult> UpdateExhibitionArtworkStatus(int ExhibitionId, int ArtworkId, [FromBody] ExhibitionArtwork request)
+        {
+            if (request == null || (request.status != "Approved" && request.status != "Rejected"))
+            {
+                return BadRequest("Trạng thái không hợp lệ.");
+            }
+
+            var exhibitionArtwork = await _dbContext.ExhibitionArtworks
+                                               .FirstOrDefaultAsync(ea => ea.ExhibitionId == ExhibitionId && ea.ArtworkId == ArtworkId);
+            if (exhibitionArtwork == null)
+            {
+                return NotFound("Giải thưởng không tồn tại.");
+            }
+
+            exhibitionArtwork.status = request.status;
+            _dbContext.ExhibitionArtworks.Update(exhibitionArtwork);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpGet("GetAllContestJudge")]
+        public async Task<IActionResult> GetAllContestJudge()
+        {
+            var contestJudges = await _dbContext.ContestJudges
+                .Include(cj => cj.Staff)
+                .Include(cj => cj.Contest)
+                .ToListAsync();
+            if (contestJudges == null)
+            {
+                return NotFound("There's nothing");
+            }
+            return Ok(contestJudges);
+        }
+
+        [HttpGet("GetContestJudgeDetail/{StaffId}/{ContestId}")]
+        public async Task<IActionResult> GetContestJudgeDetail(int StaffId, int ContestId)
+        {
+            var contestJudge = await _dbContext.ContestJudges
+                .FirstOrDefaultAsync(cj => cj.StaffId == StaffId && cj.ContestId == ContestId);
+            if (contestJudge == null)
+            {
+                return NotFound("Can't Find This Contest Judge");
+            }
+            return Ok(contestJudge);
+        }
+
+        [HttpPut("UpdateContestJudgeStatus/{StaffId}/{ContestId}")]
+        public async Task<IActionResult> UpdateContestJudgeStatus(int StaffId, int ContestId, [FromBody] ContestJudge request)
+        {
+            if (request == null || (request.status != "Approved" && request.status != "Rejected"))
+            {
+                return BadRequest("Trạng thái không hợp lệ.");
+            }
+
+            var contestJudge = await _dbContext.ContestJudges
+                                               .FirstOrDefaultAsync(cj => cj.StaffId == StaffId && cj.ContestId == ContestId);
+            if (contestJudge == null)
+            {
+                return NotFound("Giải thưởng không tồn tại.");
+            }
+
+            contestJudge.status = request.status;
+            _dbContext.ContestJudges.Update(contestJudge);
             await _dbContext.SaveChangesAsync();
 
             return NoContent();
