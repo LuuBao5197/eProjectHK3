@@ -531,8 +531,6 @@ namespace eProject.Controllers
         public async Task<IActionResult> GetAllContestJudge()
         {
             var contestJudges = await _dbContext.ContestJudges
-                .Include(cj => cj.Staff)
-                .Include(cj => cj.Contest)
                 .ToListAsync();
             if (contestJudges == null)
             {
