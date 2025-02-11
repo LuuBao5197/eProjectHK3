@@ -224,7 +224,7 @@ namespace eProject.Migrations
                     Location = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     OrganizedBy = table.Column<int>(type: "int", nullable: false),
                     thumbnail = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Phase = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CancelReason = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
@@ -394,7 +394,8 @@ namespace eProject.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FilePath = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AverageRating = table.Column<double>(type: "float", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -418,7 +419,8 @@ namespace eProject.Migrations
                 columns: table => new
                 {
                     StudentId = table.Column<int>(type: "int", nullable: false),
-                    AwardId = table.Column<int>(type: "int", nullable: false)
+                    AwardId = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -446,7 +448,7 @@ namespace eProject.Migrations
                     SubmissionId = table.Column<int>(type: "int", nullable: false),
                     Price = table.Column<float>(type: "real", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SellingPrice = table.Column<float>(type: "real", nullable: false),
+                    SellingPrice = table.Column<float>(type: "real", nullable: true),
                     PaymentStatus = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ExhibitionDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -499,7 +501,8 @@ namespace eProject.Migrations
                 columns: table => new
                 {
                     ExhibitionId = table.Column<int>(type: "int", nullable: false),
-                    ArtworkId = table.Column<int>(type: "int", nullable: false)
+                    ArtworkId = table.Column<int>(type: "int", nullable: false),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -607,9 +610,10 @@ namespace eProject.Migrations
                 column: "ContestId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Submissions_StudentId",
+                name: "IX_Submissions_StudentId_ContestId",
                 table: "Submissions",
-                column: "StudentId");
+                columns: new[] { "StudentId", "ContestId" },
+                unique: true);
         }
 
         /// <inheritdoc />

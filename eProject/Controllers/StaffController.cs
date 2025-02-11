@@ -217,6 +217,7 @@ namespace eProject.Controllers
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Include(a => a.Contest)
+                .OrderByDescending(a=>a.ContestId)
                 .ToListAsync();
 
             return Ok(new
@@ -242,6 +243,11 @@ namespace eProject.Controllers
         [HttpPost("AddAward")]
         public async Task<IActionResult> AddAward(Award award)
         {
+            var awardDuplicateValue = await _dbContext.Awards.FirstOrDefaultAsync(a=>a.ContestId==award.ContestId &&  a.Value == award.Value);
+            if (awardDuplicateValue != null)
+            {
+                return BadRequest("The prize values in the same competition must be unique.");
+            }
             await _dbContext.Awards.AddAsync(award);
             await _dbContext.SaveChangesAsync();
             return Ok(award);
@@ -261,6 +267,11 @@ namespace eProject.Controllers
                 {
                     return NotFound(new { message = "No result about this contest" });
                 }
+                var awardDuplicateValue = await _dbContext.Awards.FirstOrDefaultAsync(a => a.ContestId == award.ContestId && a.Value == award.Value);
+                if (awardDuplicateValue != null)
+                {
+                    return BadRequest(" ");
+                }
 
                 _dbContext.Entry(award).State = EntityState.Modified;
                 await _dbContext.SaveChangesAsync();
@@ -273,7 +284,27 @@ namespace eProject.Controllers
 
             }
         }
+        [HttpDelete("DeleteAward/{id}")]
+        public async Task<IActionResult> DeleteAward(int id)
+        {
+            try
+            {
+                var award = await _dbContext.Awards.FirstOrDefaultAsync(a => a.Id == id);
+                if(award == null)
+                {
+                    return BadRequest("Not Found Award");
+                }
+                _dbContext.Awards.Remove(award);
+                await _dbContext.SaveChangesAsync();
+                return Ok(award);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
 
+            }
+
+        }
 
         [HttpGet("GetAllExhibition")]
         public async Task<IActionResult> GetAllExhibition(int page = 1, int pageSize = 10, string? search = null, string? status = null, string? phase = null)
@@ -697,8 +728,8 @@ namespace eProject.Controllers
 
 
             // Save to StudentAwards Table
-            await _dbContext.StudentAwards.AddRangeAsync(studentAwards);
-            await _dbContext.SaveChangesAsync();
+       /*     await _dbContext.StudentAwards.AddRangeAsync(studentAwards);
+            await _dbContext.SaveChangesAsync();*/
 
             return Ok(studentAwards);
         }
