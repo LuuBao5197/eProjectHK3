@@ -264,5 +264,78 @@ namespace eProject.Controllers
 
             return Ok(new { exists = emailExists });
         }
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStaffStatus(int id, [FromBody] UpdateStaffStatusRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Dữ liệu không hợp lệ.");
+            }
+
+            // Tìm kiếm nhân viên theo ID
+            var staff = await _dbContext.Staff
+                                        .Include(s => s.User)
+                                        .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (staff == null)
+            {
+                return NotFound("Nhân viên không tồn tại.");
+            }
+
+            // Cập nhật trạng thái của User
+            var user = staff.User;
+            user.Status = request.Status;
+
+            // Lưu thay đổi vào cơ sở dữ liệu
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { message = "Cập nhật trạng thái nhân viên thành công", staff });
+        }
+        [HttpPut("staff/{id}")]
+        public async Task<IActionResult> UpdateStaff(int id, [FromForm] CreateStaffRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            // Find staff by ID
+            var staff = await _dbContext.Staff.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id);
+            if (staff == null)
+            {
+                return NotFound("Staff not found.");
+            }
+
+            var user = staff.User;
+            if (user == null)
+            {
+                return NotFound("Associated user not found.");
+            }
+
+            // Update basic User information
+            user.Username = request.Username;
+            user.Password = request.Password;
+            user.Role = request.Role;
+            user.Name = request.Name;
+            user.Email = request.Email;
+            user.Phone = request.Phone;
+            user.Address = request.Address;
+            user.JoinDate = request.JoinDate;
+            user.Dob = request.Dob.ToString("yyyy-MM-dd");
+
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync();
+
+            // Update Staff information
+            staff.JoinDate = request.JoinDate;
+            staff.IsReviewer = request.IsReviewer;
+
+            _dbContext.Staff.Update(staff);
+            await _dbContext.SaveChangesAsync();
+
+            // Save changes to the database
+            return Ok(new { message = "Staff updated successfully", staff });
+        }
     }
-}
+  }
