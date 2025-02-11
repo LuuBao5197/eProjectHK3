@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace eProject.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250204190158_configUniqueToSubmission")]
-    partial class configUniqueToSubmission
+    [Migration("20250211033247_resetDB")]
+    partial class resetDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -41,7 +41,7 @@ namespace eProject.Migrations
                     b.Property<float>("Price")
                         .HasColumnType("real");
 
-                    b.Property<float>("SellingPrice")
+                    b.Property<float?>("SellingPrice")
                         .HasColumnType("real");
 
                     b.Property<string>("Status")
@@ -261,7 +261,7 @@ namespace eProject.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("status")
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -282,6 +282,10 @@ namespace eProject.Migrations
 
                     b.Property<int>("ArtworkId")
                         .HasColumnType("int");
+
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("ExhibitionId", "ArtworkId");
 
@@ -487,6 +491,10 @@ namespace eProject.Migrations
                     b.Property<int>("AwardId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("StudentId", "AwardId");
 
                     b.HasIndex("AwardId");
@@ -533,6 +541,9 @@ namespace eProject.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double?>("AverageRating")
+                        .HasColumnType("float");
 
                     b.Property<int>("ContestId")
                         .HasColumnType("int");
