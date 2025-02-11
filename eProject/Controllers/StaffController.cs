@@ -692,7 +692,7 @@ namespace eProject.Controllers
             _dbContext.Submissions.UpdateRange(submissions);
 
             // Sort submissions by average descending
-            submissions = submissions.OrderByDescending(s => s.AverageRating).ToList();
+            submissions = submissions.OrderByDescending(s => s.AverageRating).ThenBy(s => s.SubmissionDate).ToList();
 
 
             // Get List Awards by Contest
@@ -728,8 +728,8 @@ namespace eProject.Controllers
 
 
             // Save to StudentAwards Table
-       /*     await _dbContext.StudentAwards.AddRangeAsync(studentAwards);
-            await _dbContext.SaveChangesAsync();*/
+            await _dbContext.StudentAwards.AddRangeAsync(studentAwards);
+            await _dbContext.SaveChangesAsync();
 
             return Ok(studentAwards);
         }
@@ -916,8 +916,7 @@ namespace eProject.Controllers
         [HttpPatch("SendAwardForReview/{id}")]
         public async Task<IActionResult> SendAwardForReview(int id)
         {
-            var userId = int.Parse(GetCurrentUserId());
-            var InfoSender = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+          
             var award = await _dbContext.Awards.FindAsync(id);
             if (award == null)
             {
@@ -941,33 +940,48 @@ namespace eProject.Controllers
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>Approval Request</title>
+    <title>Award Approval Request</title>
 </head>
-<body style='font-family: Arial, sans-serif; background-color: #f4f4f4; paddinKD: 20px;'>
+<body style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;'>
     <div style='max-width: 600px; margin: 0 auto; background: #ffffff; padding: 20px; 
                 border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);'>
-        <h2 style='color: #333;'>Approval Request Notification</h2>
-        <p>Hello <strong>Manager</strong>,</p>
-        <p>A new request is awaiting your approval. Below are the details:</p>
+        <h2 style='color: #333;'>Award Approval Request</h2>
+        <p>Hello <strong>{manager.Name}</strong>,</p>
+        <p>A new award submission requires your review. Below are the details:</p>
 
         <table style='width: 100%; border-collapse: collapse; margin: 20px 0;'>
-            <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Award Name:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'> {award.Name}</td></tr>
-            <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Request Type:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>Contest Draft</td></tr>
-            <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Created Date:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{DateTime.Now}</td></tr>
+            <tr>
+                <td style='padding: 8px; border: 1px solid #ddd;'><strong>Award Name:</strong></td>
+                <td style='padding: 8px; border: 1px solid #ddd;'>{award.Name}</td>
+            </tr>
+            <tr>
+                <td style='padding: 8px; border: 1px solid #ddd;'><strong>Submission Date:</strong></td>
+                <td style='padding: 8px; border: 1px solid #ddd;'>{DateTime.Now}</td>
+            </tr>
+            <tr>
+                <td style='padding: 8px; border: 1px solid #ddd;'><strong>Value ($):</strong></td>
+                <td style='padding: 8px; border: 1px solid #ddd;'>{award.Value}</td>
+            </tr>
+            <tr>
+                <td style='padding: 8px; border: 1px solid #ddd;'><strong>Quantity:</strong></td>
+                <td style='padding: 8px; border: 1px solid #ddd;'>{award.AwardQuantity}</td>
+            </tr>
         </table>
 
-        <p>Please click the link below to review and approve the request:</p>
+        <p>Please review and approve the award by clicking the button below:</p>
         <p style='text-align: center;'>
-            <a href='https://yourwebsite.com/approve-request?id=123' 
-               style='background: #28a745; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>
+            <a href='http://localhost:5173/manager/requestsaward/{award.Id}' 
+               style='background: #28a745; color: #ffffff; padding: 12px 20px; text-decoration: none; 
+                      border-radius: 5px; display: inline-block;'>
                Review & Approve
             </a>
         </p>
-        <p>If you did not initiate this request, please ignore this email.</p>
+        <p>If you were not expecting this request, please disregard this email.</p>
         <p>Best regards,<br><strong>Management System</strong></p>
     </div>
 </body>
 </html>";
+
                 await _dbContext.SaveChangesAsync();
                 SendEmail(manager.Email, "Review Award", emailContent);
                 return Ok(award);
@@ -1339,7 +1353,7 @@ namespace eProject.Controllers
             }
             foreach (var item in artworks)
             {
-                if(_dbContext.Artworks.FirstOrDefaultAsync(a=>a.SubmissionId == item.SubmissionId) != null)
+                if(await _dbContext.Artworks.FirstOrDefaultAsync(a=>a.SubmissionId == item.SubmissionId) != null)
                 {
                     return BadRequest("Submission have been available in data");
                 }
