@@ -68,7 +68,7 @@ namespace eProject.Controllers
                         Phone = request.Phone,
                         Address = request.Address,
                         Dob = request.Dob.ToString("yyyy-MM-dd"),
-                        Status = false,
+                        Status = true,
                         JoinDate = request.JoinDate,
                         Expired = DateTime.MaxValue,
                         Imagepath = imagePath // Thêm đường dẫn ảnh
@@ -563,5 +563,42 @@ namespace eProject.Controllers
 
             return Ok(students);
         }
+        [HttpPut("update-status/{id}")]
+        public async Task<IActionResult> UpdateStudentStatus(int id, [FromBody] UpdateStatusRequest request)
+        {
+            var student = await _dbContext.Students
+                                          .Include(s => s.User)
+                                          .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (student == null)
+            {
+                return NotFound(new { message = "Student not found." });
+            }
+
+            try
+            {
+                student.User.Status = request.Status; // Nhận true hoặc false trực tiếp
+
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = "Student status updated successfully.",
+                    student = new
+                    {
+                        student.Id,
+                        Name = student.User.Name,
+                        Email = student.User.Email,
+                        Status = student.User.Status // Trả về true hoặc false
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+
     }
 }
