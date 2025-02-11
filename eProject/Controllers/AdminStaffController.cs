@@ -24,10 +24,10 @@ namespace eProject.Controllers
         {
             if (request == null)
             {
-                return BadRequest("Dữ liệu không hợp lệ.");
+                return BadRequest("Invalid data.");
             }
 
-            // Xử lý tải lên ảnh
+            // Handle image upload
             string imagePath = null;
             if (profileImage != null && profileImage.Length > 0)
             {
@@ -46,7 +46,7 @@ namespace eProject.Controllers
                 imagePath = $"/Uploads/UserAvatar/{uniqueFileName}";
             }
 
-            // Tạo đối tượng User
+            // Create User object
             var user = new User
             {
                 Username = request.Username,
@@ -55,18 +55,18 @@ namespace eProject.Controllers
                 Name = request.Name,
                 Email = request.Email,
                 Phone = request.Phone,
-                Address = request.Address, // Thêm địa chỉ
-                Imagepath = imagePath, // Thêm đường dẫn ảnh
+                Address = request.Address, // Add address
+                Imagepath = imagePath, // Add image path
                 JoinDate = request.JoinDate,
                 Dob = request.Dob.ToString("yyyy-MM-dd"),
                 Expired = DateTime.UtcNow.AddYears(1)
             };
 
-            // Lưu User vào cơ sở dữ liệu
+            // Save User to the database
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
-            // Tạo đối tượng Staff
+            // Create Staff object
             var staff = new Staff
             {
                 UserId = user.Id,
@@ -74,11 +74,11 @@ namespace eProject.Controllers
                 IsReviewer = false
             };
 
-            // Lưu Staff vào cơ sở dữ liệu
+            // Save Staff to the database
             _dbContext.Staff.Add(staff);
             await _dbContext.SaveChangesAsync();
 
-            // Xử lý các mối quan hệ Subject (nếu có)
+            // Handle Subject relationships (if any)
             if (request.StaffSubjectIds != null)
             {
                 foreach (var subjectId in request.StaffSubjectIds)
@@ -86,7 +86,7 @@ namespace eProject.Controllers
                     var subjectExists = await _dbContext.Subjects.AnyAsync(s => s.Id == subjectId);
                     if (!subjectExists)
                     {
-                        return BadRequest($"Môn học với ID {subjectId} không tồn tại.");
+                        return BadRequest($"Subject with ID {subjectId} does not exist.");
                     }
                     var staffSubject = new StaffSubject
                     {
@@ -97,7 +97,7 @@ namespace eProject.Controllers
                 }
             }
 
-            // Xử lý các mối quan hệ Qualification (nếu có)
+            // Handle Qualification relationships (if any)
             if (request.StaffQualificationIds != null)
             {
                 foreach (var qualificationId in request.StaffQualificationIds)
@@ -105,7 +105,7 @@ namespace eProject.Controllers
                     var qualificationExists = await _dbContext.Qualifications.AnyAsync(q => q.Id == qualificationId);
                     if (!qualificationExists)
                     {
-                        return BadRequest($"Bằng cấp với ID {qualificationId} không tồn tại.");
+                        return BadRequest($"Qualification with ID {qualificationId} does not exist.");
                     }
                     var staffQualification = new StaffQualification
                     {
@@ -116,19 +116,19 @@ namespace eProject.Controllers
                 }
             }
 
-            // Lưu các thay đổi liên quan đến mối quan hệ
+            // Save all relationship-related changes
             await _dbContext.SaveChangesAsync();
 
-            // Gửi email chào mừng cho nhân viên
+            // Send welcome email to staff
             var emailRequest = new EmailRequest
             {
                 ToMail = user.Email,
-                Subject = "Chào mừng đến hệ thống của chúng tôi",
-                HtmlContent = $"Kính chào {user.Name},<br/><br/>" +
-                              "Tài khoản của bạn đã được tạo thành công. Dưới đây là thông tin đăng nhập:<br/>" +
-                              $"<b>Tên đăng nhập:</b> {user.Username}<br/>" +
-                              $"<b>Mật khẩu:</b> {user.Password}<br/><br/>" +
-                              "Trân trọng,<br/>Đội ngũ"
+                Subject = "Welcome to our system",
+                HtmlContent = $"Dear {user.Name},<br/><br/>" +
+                              "Your account has been successfully created. Here are your login details:<br/>" +
+                              $"<b>Username:</b> {user.Username}<br/>" +
+                              $"<b>Password:</b> {user.Password}<br/><br/>" +
+                              "Best regards,<br/>The Team"
             };
 
             try
@@ -137,26 +137,23 @@ namespace eProject.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Lỗi khi gửi email cho nhân viên: {ex.Message}");
+                return StatusCode(500, $"Error sending email to staff: {ex.Message}");
             }
 
-            // Gửi email thông báo đến quản lý
-            // Bạn có thể lấy email của quản lý từ cấu hình hoặc sử dụng email mặc định
-            string managerEmail = "quylakvip1@gmail.com"; // email quản lý mặc định
+            // Send notification email to the manager
+            string managerEmail = "quylakvip1@gmail.com"; // Default manager email
 
             var managerEmailRequest = new EmailRequest
             {
                 ToMail = managerEmail,
-                Subject = "Thông báo về nhân viên mới",
-                HtmlContent = $"Kính chào Quản lý,<br/><br/>" +
-                  $"Một nhân viên mới đã được thêm vào hệ thống với thông tin dưới đây:<br/>" +
-                  $"<b>Tên nhân viên:</b> {user.Name}<br/>" +
-                  $"<b>Tên đăng nhập:</b> {user.Username}<br/>" +
+                Subject = "New Staff Notification",
+                HtmlContent = $"Dear Manager,<br/><br/>" +
+                  $"A new staff member has been added to the system with the following details:<br/>" +
+                  $"<b>Staff Name:</b> {user.Name}<br/>" +
                   $"<b>Email:</b> {user.Email}<br/><br/>" +
-                  $"<a href='http://localhost:5173/manager/Inactive-Staff-Status'>Click vào đây để xem chi tiết</a><br/><br/>" +
-                  "Trân trọng,<br/>Đội ngũ"
+                  $"<a href='http://localhost:5173/manager/Inactive-Staff-Status'>Click here for details</a><br/><br/>" +
+                  "Best regards,<br/>The Team"
             };
-
 
             try
             {
@@ -164,10 +161,10 @@ namespace eProject.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Lỗi khi gửi email thông báo cho quản lý: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error sending notification email to the manager: {ex.Message}" });
             }
 
-            return Ok(new { message = "Tạo nhân viên thành công, email đã được gửi", staff = staff });
+            return Ok(new { message = "Staff created successfully, email has been sent", staff = staff });
         }
 
         [HttpGet("subjects")]
@@ -187,13 +184,11 @@ namespace eProject.Controllers
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllStaff()
         {
-            // Lấy tất cả nhân viên có role là "staff" từ cơ sở dữ liệu
-            var staffList = await _dbContext.Staff.Include(s => s.User)
-                                                   .ToListAsync();
+            var staffList = await _dbContext.Staff.Include(s => s.User).ToListAsync();
 
             if (staffList == null || staffList.Count == 0)
             {
-                return NotFound("Không có nhân viên nào trong hệ thống.");
+                return NotFound("No staff members found in the system.");
             }
 
             return Ok(staffList);
@@ -202,61 +197,49 @@ namespace eProject.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> LockStaff(int id)
         {
-            // Find the Staff member by id
-            var staff = await _dbContext.Staff
-                                        .Include(s => s.User)
-                                        .FirstOrDefaultAsync(s => s.Id == id);
+            var staff = await _dbContext.Staff.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id);
 
             if (staff == null)
             {
                 return NotFound("Staff not found.");
             }
 
-            // Lock the User account by setting the Status to false (inactive)
             var user = staff.User;
-            user.Status = false; // Mark the account as inactive
+            user.Status = false; // Mark account as inactive
             _dbContext.Users.Update(user);
 
-            // Save changes to the database
             await _dbContext.SaveChangesAsync();
 
             return Ok(new { message = "Staff account has been locked successfully." });
         }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UnlockStaff(int id)
         {
-            // Tìm kiếm nhân viên theo id
-            var staff = await _dbContext.Staff
-                                        .Include(s => s.User)
-                                        .FirstOrDefaultAsync(s => s.Id == id);
+            var staff = await _dbContext.Staff.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id);
 
             if (staff == null)
             {
                 return NotFound("Staff not found.");
             }
 
-            // Mở khóa tài khoản của người dùng bằng cách đặt Status thành true (hoạt động)
             var user = staff.User;
-            user.Status = true; // Đặt tài khoản thành hoạt động
+            user.Status = true; // Activate account
             _dbContext.Users.Update(user);
 
-            // Lưu thay đổi vào cơ sở dữ liệu
             await _dbContext.SaveChangesAsync();
 
             return Ok(new { message = "Staff account has been unlocked successfully." });
         }
-        
-
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStaffDetails(int id)
         {
-            // Tìm Staff theo id và bao gồm các mối quan hệ liên quan
             var staff = await _dbContext.Staff
-                                        .Include(s => s.User) // Bao gồm thông tin User
-                                        .Include(s => s.Classes) // Bao gồm thông tin Classes
+                                        .Include(s => s.User)
+                                        .Include(s => s.Classes)
                                         .Include(s => s.StaffQualifications)
-                                        .ThenInclude(sc => sc.Qualification )
+                                        .ThenInclude(sc => sc.Qualification)
                                         .Include(s => s.StaffSubjects)
                                         .ThenInclude(sc => sc.Subject)
                                         .FirstOrDefaultAsync(s => s.Id == id);
@@ -266,9 +249,9 @@ namespace eProject.Controllers
                 return NotFound("Staff not found.");
             }
 
-            // Trả về thông tin chi tiết Staff
             return Ok(staff);
         }
+
         [HttpGet("check-email")]
         public async Task<IActionResult> CheckEmailExists([FromQuery] string email)
         {
@@ -281,80 +264,5 @@ namespace eProject.Controllers
 
             return Ok(new { exists = emailExists });
         }
-        [HttpPut("staff/{id}")]
-public async Task<IActionResult> UpdateStaff(int id, [FromForm] CreateStaffRequest request)
-{
-    if (request == null)
-    {
-        return BadRequest("Dữ liệu không hợp lệ.");
-    }
-
-    // Tìm kiếm nhân viên theo ID
-    var staff = await _dbContext.Staff.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id);
-    if (staff == null)
-    {
-        return NotFound("Nhân viên không tồn tại.");
-    }
-
-    var user = staff.User;
-    if (user == null)
-    {
-        return NotFound("Người dùng liên kết không tồn tại.");
-    }
-
-    // Cập nhật thông tin cơ bản của User
-    user.Username = request.Username;
-    user.Password = request.Password;
-    user.Role = request.Role;
-    user.Name = request.Name;
-    user.Email = request.Email;
-    user.Phone = request.Phone;
-    user.Address = request.Address;
-    user.JoinDate = request.JoinDate;
-    user.Dob = request.Dob.ToString("yyyy-MM-dd");
-
-    _dbContext.Users.Update(user);
-    await _dbContext.SaveChangesAsync();
-
-    // Cập nhật thông tin của Staff
-    staff.JoinDate = request.JoinDate;
-    staff.IsReviewer = request.IsReviewer;
-
-    _dbContext.Staff.Update(staff);
-    await _dbContext.SaveChangesAsync();
-
-    // Lưu thay đổi vào cơ sở dữ liệu
-    return Ok(new { message = "Cập nhật nhân viên thành công", staff });
-}
-        [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateStaffStatus(int id, [FromBody] UpdateStaffStatusRequest request)
-        {
-            if (request == null)
-            {
-                return BadRequest("Dữ liệu không hợp lệ.");
-            }
-
-            // Tìm kiếm nhân viên theo ID
-            var staff = await _dbContext.Staff
-                                        .Include(s => s.User)
-                                        .FirstOrDefaultAsync(s => s.Id == id);
-
-            if (staff == null)
-            {
-                return NotFound("Nhân viên không tồn tại.");
-            }
-
-            // Cập nhật trạng thái của User
-            var user = staff.User;
-            user.Status = request.Status;
-
-            // Lưu thay đổi vào cơ sở dữ liệu
-            _dbContext.Users.Update(user);
-            await _dbContext.SaveChangesAsync();
-
-            return Ok(new { message = "Cập nhật trạng thái nhân viên thành công", staff });
-        }
-
-
     }
 }

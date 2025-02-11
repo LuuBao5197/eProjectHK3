@@ -111,6 +111,10 @@ public class CreateStaffRequest
     public ICollection<int>? StaffQualificationIds { get; set; }
   
 }
+public class UpdateStatusRequest
+{
+    public bool Status { get; set; } // Chấp nhận true hoặc false
+}
 
 public class UpdateStaffStatusRequest
 {
