@@ -216,14 +216,15 @@ namespace eProject.Controllers
                                 {
                                     Username = fields[0],
                                     Password = fields[1],
-                                    Role = "student",
+                                    Role = "Student",
                                     Name = fields[2],
                                     Email = fields[3],
                                     Phone = fields[4],
                                     Dob = DateTime.Parse(fields[5]).ToString("yyyy-MM-dd"),
                                     JoinDate = DateTime.Parse(fields[6]),
                                     Expired = DateTime.MaxValue,
-                                    Address = fields[10]  // Gán giá trị Address từ cột 11
+                                    Address = fields[10],
+                                    Status = true,
                                 };
 
                                 _dbContext.Users.Add(user);
