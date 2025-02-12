@@ -1632,6 +1632,59 @@ namespace eProject.Controllers
             }
         }
 
+        [HttpPatch("PublishContest/{id}")]
+        public async Task<IActionResult> PublishContest(int id)
+        {
+            var contest = await _dbContext.Contests.FindAsync(id);
+            if (contest == null)
+            {
+                return NotFound("Contest not found.");
+            }
+            try
+            {
+                if (contest.Status != "Approved") return BadRequest("Only apply for contest have status Approved");
+                var awards = await _dbContext.Awards.Where(a => a.ContestId == id).ToListAsync();
+                if (awards.Count == 0) return BadRequest("This contest havenot awards");
+                if (awards.Any(a => a.Status != "Approved")) return BadRequest("All Awards for contest must be approved");
+                contest.Status = "Published";
+
+                // Lưu thay đổi
+                _dbContext.Contests.Update(contest);
+                await _dbContext.SaveChangesAsync();
+                return Ok(contest);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPatch("PublishExhibition/{id}")]
+        public async Task<IActionResult> PublicExhibition(int id)
+        {
+            var exhibitions = await _dbContext.Exhibitions.FindAsync(id);
+            if (exhibitions == null)
+            {
+                return NotFound("Exhibition not found.");
+            }
+            try
+            {
+                if (exhibitions.Status != "Approved") return BadRequest("Only apply for contest have status Approved");
+                var exhibitionArtwork = await _dbContext.ExhibitionArtworks.Where(a => a.ExhibitionId == id).ToListAsync();
+                if (exhibitionArtwork.Count == 0) return BadRequest("This exhibition havenot Artwork");
+                if (exhibitionArtwork.Any(ea => ea.status != "Approved")) return BadRequest("All Artwork for Exhibition must be approved");
+                exhibitions.Status = "Published";
+
+                // Lưu thay đổi
+                _dbContext.Exhibitions.Update(exhibitions);
+                await _dbContext.SaveChangesAsync();
+                return Ok(exhibitions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
         private void SendEmail(string toEmail, string subject, string body)
         {
             // Đọc cấu hình email từ appsettings.json
